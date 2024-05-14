@@ -1,49 +1,31 @@
-# Project bifrost-backups
+# 🌉 Bifrost-backups
 
-One Paragraph of project description goes here
+## 📚 Overview
 
-## Getting Started
+Bifrost-backups is a tool for helping settings-up backup on our production environment without headheachs, run it one time then forget it.
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
+## 🧠 Logic
 
-## MakeFile
+In progress
 
-run all make commands with clean tests
-```bash
-make all build
-```
+## 🚀 Getting Started
 
-build the application
-```bash
-make build
-```
+### Usage
 
-run the application
-```bash
-make run
-```
+In progress
 
-Create DB container
-```bash
-make docker-run
-```
+## 🤝 Contributing
 
-Shutdown DB container
-```bash
-make docker-down
-```
+🎉 We welcome contributions from everyone! Here's how you can contribute:
 
-live reload the application
-```bash
-make watch
-```
+- Fork the repository.
+- Create a new branch for your feature/fix.
+- Make your changes and commit them.
+- Push your changes to your forked repository.
+- Create a pull request to the 'develop' branch of the main repository.
 
-run the test suite
-```bash
-make test
-```
+See the [CONTRIBUTING](CONTRIBUTING) file for more details.
 
-clean up binary from the last build
-```bash
-make clean
-```
+## 📝 License
+
+Bifrost-env-manager is licensed under the [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0). See the [LICENSE](LICENSE) file for more details.
