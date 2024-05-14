@@ -23,6 +23,16 @@
                 "abigpassword",
                 "--disable-update-check"
             ]
+        },
+        {
+            "name": "Launch Package",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "${fileDirname}",
+            "args": [
+                "register-storage", "--disable-update-check", "--no-interactive", "--type", "1"
+            ]
         }
     ]
 }

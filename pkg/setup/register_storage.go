@@ -28,7 +28,7 @@ func InteractiveRegisterStorage() {
 	// defer file.Close()
 
 	if _, err := tea.NewProgram(interactives.LocalStorageInitialModel()).Run(); err != nil {
-		fmt.Printf("could not start program: %s\n", err)
+		utils.LogError("Could not start program: %s\n", "Register datbase", err)
 		os.Exit(1)
 	}
 
@@ -42,11 +42,22 @@ func InteractiveRegisterStorage() {
 func RegisterLocalStorage(path string) (*localstorage.LocalStorageRequirements, error) {
 	requirements := &localstorage.LocalStorageRequirements{}
 	if len(path) <= 0 {
-		utils.LogError("Path can't be empty", "Register postgresql database", nil)
-		return nil, fmt.Errorf("username can't be empty")
+		utils.LogError("Path can't be empty", "Register local storage", nil)
+		return nil, fmt.Errorf("path can't be empty")
 	}
 	requirements.FolderPath = path
 	return requirements, nil
+}
+
+func checkIfAlreadyExist(name string, Storages []Storage) bool {
+	if len(Storages) >= 1 {
+		for i := 0; i < len(Storages); i++ {
+			if name == Storages[i].Name {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func RegisterStorage(storageType StorageType, name string, storage interface{}) error {
@@ -59,7 +70,7 @@ func RegisterStorage(storageType StorageType, name string, storage interface{}) 
 	}
 	configFilePath := filepath.Join(homeDir, ".config", "bifrost_backups.json")
 
-	file, err := os.OpenFile(configFilePath, os.O_RDWR|os.O_TRUNC, 0644)
+	file, err := os.OpenFile(configFilePath, os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
 		return fmt.Errorf("error opening config file")
 	}
@@ -68,6 +79,11 @@ func RegisterStorage(storageType StorageType, name string, storage interface{}) 
 	config := Config{}
 
 	json.NewDecoder(file).Decode(&config)
+
+	exist := checkIfAlreadyExist(name, config.Storages)
+	if exist {
+		return fmt.Errorf("storage name already used")
+	}
 
 	newStorage := &Storage{
 		Type: storageType,
@@ -83,6 +99,14 @@ func RegisterStorage(storageType StorageType, name string, storage interface{}) 
 
 	config.Storages = append(config.Storages, *newStorage)
 
+	err = file.Truncate(0)
+	if err != nil {
+		return fmt.Errorf("error truncate config file")
+	}
+	_, err = file.Seek(0, 0)
+	if err != nil {
+		return fmt.Errorf("error seek config file")
+	}
 	encoder := json.NewEncoder(file)
 	if err = encoder.Encode(config); err != nil {
 		return fmt.Errorf("error encoding JSON")

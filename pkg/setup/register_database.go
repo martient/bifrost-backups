@@ -31,7 +31,7 @@ func InteractiveRegisterDatabase() {
 	// defer file.Close()
 
 	if _, err := tea.NewProgram(interactives.PostgresqlInitialModel()).Run(); err != nil {
-		fmt.Printf("could not start program: %s\n", err)
+		utils.LogError("Could not start program: %s\n", "Register datbase", err)
 		os.Exit(1)
 	}
 
@@ -45,10 +45,8 @@ func InteractiveRegisterDatabase() {
 func RegisterPostgresqlDatabase(host string, user string, name string, password string) (*postgresql.PostgresqlRequirements, error) {
 	requirements := &postgresql.PostgresqlRequirements{}
 	if len(user) <= 0 {
-		utils.LogError("Username can't be empty", "Register postgresql database", nil)
 		return nil, fmt.Errorf("username can't be empty")
 	} else if len(name) <= 0 {
-		utils.LogError("Database name can't be empty", "Register postgresql database", nil)
 		return nil, fmt.Errorf("database name can't be empty")
 	}
 	requirements.Hostname = host
