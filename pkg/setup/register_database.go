@@ -29,7 +29,7 @@ func InteractiveRegisterDatabase() {
 	// defer file.Close()
 
 	if _, err := tea.NewProgram(interactives.PostgresqlInitialModel()).Run(); err != nil {
-		fmt.Printf("could not start program: %s\n", err)
+		utils.LogError("Could not start program: %s\n", "Register datbase", err)
 		os.Exit(1)
 	}
 
@@ -43,10 +43,8 @@ func InteractiveRegisterDatabase() {
 func RegisterPostgresqlDatabase(host string, user string, name string, password string) (*postgresql.PostgresqlRequirements, error) {
 	requirements := &postgresql.PostgresqlRequirements{}
 	if len(user) <= 0 {
-		utils.LogError("Username can't be empty", "Register postgresql database", nil)
 		return nil, fmt.Errorf("username can't be empty")
 	} else if len(name) <= 0 {
-		utils.LogError("Database name can't be empty", "Register postgresql database", nil)
 		return nil, fmt.Errorf("database name can't be empty")
 	}
 	requirements.Hostname = host
@@ -66,7 +64,7 @@ func RegisterDatabase(databaseType DatabaseType, cron string, database interface
 	}
 	configFilePath := filepath.Join(homeDir, ".config", "bifrost_backups.json")
 
-	file, err := os.OpenFile(configFilePath, os.O_RDWR|os.O_TRUNC, 0644)
+	file, err := os.OpenFile(configFilePath, os.O_RDWR|os.O_CREATE, 0644)
 	if err != nil {
 		return fmt.Errorf("error opening config file")
 	}
@@ -91,6 +89,15 @@ func RegisterDatabase(databaseType DatabaseType, cron string, database interface
 	}
 
 	config.Databases = append(config.Databases, *newDatabase)
+
+	err = file.Truncate(0)
+	if err != nil {
+		return fmt.Errorf("error truncate config file")
+	}
+	_, err = file.Seek(0, 0)
+	if err != nil {
+		return fmt.Errorf("error seek config file")
+	}
 
 	encoder := json.NewEncoder(file)
 	if err = encoder.Encode(config); err != nil {
