@@ -37,13 +37,13 @@ var registerDatabaseCmd = &cobra.Command{
 				password, _ := cmd.Flags().GetString("password")
 				registered, err := setup.RegisterPostgresqlDatabase(host, user, name, password)
 				if err != nil {
-					utils.LogError("Your database haven't been registerd", "CLI", err)
+					utils.LogError("Your database haven't been registerd: %s", "CLI", err)
 					os.Exit(1)
 				}
 				cron, _ := cmd.Flags().GetString("cron")
 				err = setup.RegisterDatabase(db_type, cron, registered)
 				if err != nil {
-					utils.LogError("Saved failed", "CLI", err)
+					utils.LogError("Saved failed: %s", "CLI", err)
 					os.Exit(1)
 				}
 			case 2:
