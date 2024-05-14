@@ -1,0 +1,48 @@
+# Add 'repo' label to any root file changes
+'repository config':
+- '.github/**'
+- '.vscode/**'
+
+cli:
+- 'cmd/**'
+
+models:
+- 'pkg/**/models.go'
+
+utils:
+- 'pkg/**/utils.go'
+
+'setup/config':
+- 'pkg/setup'
+
+'interactives cli':
+- pkg/setup/interactives
+
+postgresql:
+- pkg/postgresql
+
+sqlite3:
+- pkg/sqlite3
+
+localStorage:
+- pkg/local_storage
+
+s3:
+- pkg/s3
+
+test:
+- src/**/*_test.go
+
+docs:
+- '**.md'
+
+setup:
+- '.github/**'
+- 'Makefile'
+- 'go.mod'
+- 'go.sum'
+- '.gitignore'
+
+package:
+- 'go.mod'
+- 'go.sum'

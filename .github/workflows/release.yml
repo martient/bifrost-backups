@@ -1,0 +1,84 @@
+name: goreleaser
+
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - main
+  push:
+    branches:
+      - 'develop'
+
+
+permissions:
+  contents: write
+  packages: write
+  issues: write
+
+jobs:
+  production:
+    if: github.event.pull_request.merged == true && github.ref_name == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          fetch-depth: '0'
+
+      - name: Bump version and push tag
+        uses: anothrNick/github-tag-action@1.67.0
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          WITH_V: true
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - run: git fetch --force --tags
+      - uses: actions/setup-go@v4
+        with:
+          go-version: stable
+      - uses: goreleaser/goreleaser-action@v4
+        with:
+          distribution: goreleaser
+          version: latest
+          args: release --clean
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          PATCH_STRING_TOKEN: "fix"
+          MINOR_STRING_TOKEN: "feat"
+          NONE_STRING_TOKEN: " "
+          
+  nightly:
+    if: ${{ github.ref_name == 'develop' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          fetch-depth: '0'
+
+      - name: Bump version and push tag
+        uses: anothrNick/github-tag-action@1.67.0
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          WITH_V: true
+          PRERELEASE: true
+          PATCH_STRING_TOKEN: "fix"
+          MINOR_STRING_TOKEN: "feat"
+          NONE_STRING_TOKEN: " "
+
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - run: git fetch --force --tags
+      - uses: actions/setup-go@v4
+        with:
+          go-version: stable
+      - uses: goreleaser/goreleaser-action@v4
+        with:
+          distribution: goreleaser
+          version: latest
+          args: release --clean
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
