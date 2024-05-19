@@ -28,6 +28,7 @@ type Storage struct {
 
 type Database struct {
 	Type       DatabaseType `json:"database_type"`
+	Name       string
 	Postgresql postgresql.PostgresqlRequirements
 	Sqlite3    sqlite3.Sqlite3Requirements
 	Cron       string `json:"cron"`

@@ -56,7 +56,7 @@ func RegisterPostgresqlDatabase(host string, user string, name string, password 
 	return requirements, nil
 }
 
-func RegisterDatabase(databaseType DatabaseType, cron string, database interface{}) error {
+func RegisterDatabase(databaseType DatabaseType, name string, cron string, database interface{}) error {
 	if database == nil {
 		return fmt.Errorf("database is null")
 	}
@@ -78,6 +78,7 @@ func RegisterDatabase(databaseType DatabaseType, cron string, database interface
 
 	newDatabase := &Database{
 		Type: databaseType,
+		Name: name,
 		Cron: cron,
 	}
 

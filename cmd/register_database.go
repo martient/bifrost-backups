@@ -41,7 +41,7 @@ var registerDatabaseCmd = &cobra.Command{
 					os.Exit(1)
 				}
 				cron, _ := cmd.Flags().GetString("cron")
-				err = setup.RegisterDatabase(db_type, cron, registered)
+				err = setup.RegisterDatabase(db_type, name, cron, registered)
 				if err != nil {
 					utils.LogError("Saved failed", "CLI", err)
 					os.Exit(1)
