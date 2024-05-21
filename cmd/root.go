@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"github.com/martient/bifrost-backup/pkg/setup"
 	"github.com/martient/golang-utils/utils"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -36,7 +35,7 @@ func init() {
 	cobra.OnInitialize(initConfig)
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 	rootCmd.SetVersionTemplate(`{{with .Name}}{{printf   .}}{{end}} {{printf  .Version}}`)
-	rootCmd.PersistentFlags().StringVar(&jsonConfigFile, "config", "config.json", "config file for the backup(s)")
+	// rootCmd.PersistentFlags().StringVar(&jsonConfigFile, "config", "config.json", "config file for the backup(s)")
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
@@ -49,11 +48,9 @@ func init() {
 }
 
 func initConfig() {
-	if jsonConfigFile != "" {
-		viper.SetConfigFile(jsonConfigFile)
-	}
-
-	setup.GenerateDefaultConfig(BEMversion)
+	// if jsonConfigFile != "" {
+	// 	viper.SetConfigFile(jsonConfigFile)
+	// }
 	viper.AutomaticEnv() // read in environment variables that match
 
 	// If a config file is found, read it in.
