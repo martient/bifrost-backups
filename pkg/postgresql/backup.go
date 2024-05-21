@@ -66,14 +66,14 @@ import (
 
 const pgDumpCommand = "pg_dump"
 
-func RunBackup(database PostgresqlRequirements) error {
+func RunBackup(database PostgresqlRequirements) (*bytes.Buffer, error) {
 	if err := validateRequirements(database); err != nil {
-		return err
+		return nil, err
 	}
 
 	pgDumpPath, err := exec.LookPath(pgDumpCommand)
 	if err != nil {
-		return fmt.Errorf("pg_dump command not found: %w", err)
+		return nil, fmt.Errorf("pg_dump command not found: %w", err)
 	}
 
 	args := buildCommandArgs(database)
@@ -86,9 +86,9 @@ func RunBackup(database PostgresqlRequirements) error {
 	err = cmd.Run()
 	if err != nil {
 		utils.LogError("Failed to backup database '%s'", "POSTGRESQL", err)
-		return fmt.Errorf("backup failed: %w", err)
+		return nil, fmt.Errorf("backup failed: %w", err)
 	}
-	return nil
+	return &buffer, nil
 }
 
 func validateRequirements(database PostgresqlRequirements) error {

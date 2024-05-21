@@ -21,21 +21,22 @@ const (
 )
 
 type Storage struct {
-	Type         StorageType `json:"storage_type"`
-	Name         string
-	LocalStorage localstorage.LocalStorageRequirements
+	Type         StorageType                           `json:"storage_type"`
+	Name         string                                `json:"name"`
+	LocalStorage localstorage.LocalStorageRequirements `json:"local_storage"`
 }
 
 type Database struct {
-	Type       DatabaseType `json:"database_type"`
-	Name       string
-	Postgresql postgresql.PostgresqlRequirements
-	Sqlite3    sqlite3.Sqlite3Requirements
-	Cron       string `json:"cron"`
+	Type       DatabaseType                      `json:"database_type"`
+	Name       string                            `json:"name"`
+	Postgresql postgresql.PostgresqlRequirements `json:"postgresql"`
+	Sqlite3    sqlite3.Sqlite3Requirements       `json:"sqlite3"`
+	Storages   []string                          `json:"storages"`
+	Cron       string                            `json:"cron"`
 }
 
 type Config struct {
-	Version   string `json:"version"`
-	Databases []Database
-	Storages  []Storage
+	Version   string     `json:"version"`
+	Databases []Database `json:"databases"`
+	Storages  []Storage  `json:"storages"`
 }

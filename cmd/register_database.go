@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"os"
+	"strings"
 
 	"github.com/martient/bifrost-backup/pkg/setup"
 	"github.com/martient/golang-utils/utils"
@@ -41,7 +42,9 @@ var registerDatabaseCmd = &cobra.Command{
 					os.Exit(1)
 				}
 				cron, _ := cmd.Flags().GetString("cron")
-				err = setup.RegisterDatabase(db_type, name, cron, registered)
+				storagesStr, _ := cmd.Flags().GetString("storages")
+				storages := strings.Split(storagesStr, ",")
+				err = setup.RegisterDatabase(db_type, name, cron, storages, registered)
 				if err != nil {
 					utils.LogError("Saved failed", "CLI", err)
 					os.Exit(1)
@@ -71,5 +74,5 @@ func init() {
 	registerDatabaseCmd.Flags().String("user", "", "Database user")
 	registerDatabaseCmd.Flags().String("password", "", "Database user password")
 	registerDatabaseCmd.Flags().String("cron", "0,30 * * * *", "Backup cron (default, one backup each 30 minutes)")
-	registerDatabaseCmd.Flags().String("storage", "default", "Storage id (default, local storage of the home user .bifrost_backups)")
+	registerDatabaseCmd.Flags().String("storages", "default", "Storage name ex:\"s3AWS, s3Azure, s3GCP\" (default, local storage of the home user .bifrost_backups)")
 }

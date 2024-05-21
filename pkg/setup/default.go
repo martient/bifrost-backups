@@ -10,7 +10,7 @@ import (
 	"github.com/martient/golang-utils/utils"
 )
 
-func GenerateDefaultConfig(current_version string) {
+func generateDefaultConfig(current_version string) {
 	config := &Config{}
 
 	homeDir, err := os.UserHomeDir()

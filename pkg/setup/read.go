@@ -42,3 +42,17 @@ func ReadDatabaseConfig(name string) (Database, error) {
 	}
 	return Database{}, fmt.Errorf("database with name %q not found", name)
 }
+
+func ReadStorageConfig(name string) (Storage, error) {
+	config, err := readConfig()
+
+	if err != nil {
+		return Storage{}, err
+	}
+	for i := 0; i < len(config.Storages); i++ {
+		if config.Storages[i].Name == name {
+			return config.Storages[i], nil
+		}
+	}
+	return Storage{}, fmt.Errorf("storage with name %q not found", name)
+}
