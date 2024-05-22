@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch",
+            "name": "Register database",
             "type": "go",
             "request": "launch",
             "mode": "debug",
@@ -21,6 +21,32 @@
                 "dev",
                 "--password",
                 "abigpassword",
+                "--disable-update-check"
+            ]
+        },
+        {
+            "name": "Register storage",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/main.go",
+            "args": [
+                "register-storage",
+                "--no-interactive",
+                "--type",
+                "2",
+                "--name",
+                "dev",
+                "--bucket-name",
+                "dev",
+                "--account-id",
+                "abigpassword",
+                "--access-key-id",
+                "sdsda",
+                "--access-key-secret",
+                "sdsdsdad",
+                "--endpoint",
+                "dsd",
                 "--disable-update-check"
             ]
         }
