@@ -49,6 +49,19 @@
                 "dsd",
                 "--disable-update-check"
             ]
+        },
+        {
+            "name": "backup",
+            "type": "go",
+            "request": "launch",
+            "mode": "debug",
+            "program": "${workspaceFolder}/main.go",
+            "args": [
+                "backup",
+                "--disable-update-check",
+                "--name",
+                "dev",
+            ]
         }
     ]
 }

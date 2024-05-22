@@ -39,11 +39,11 @@ var registerStorageCmd = &cobra.Command{
 				}
 			case 2:
 				bucket_name, _ := cmd.Flags().GetString("bucket-name")
-				account_id, _ := cmd.Flags().GetString("account-id")
 				access_key_id, _ := cmd.Flags().GetString("access-key-id")
 				access_key_secret, _ := cmd.Flags().GetString("access-key-secret")
 				endpoint, _ := cmd.Flags().GetString("endpoint")
-				registered, err := setup.RegisterS3Storage(bucket_name, account_id, access_key_id, access_key_secret, endpoint)
+				region, _ := cmd.Flags().GetString("region")
+				registered, err := setup.RegisterS3Storage(bucket_name, access_key_id, access_key_secret, endpoint, region)
 				if err != nil {
 					utils.LogError("Your storage haven't been registerd: %s", "CLI", err)
 					os.Exit(1)
@@ -82,4 +82,5 @@ func init() {
 	registerStorageCmd.Flags().String("access-key-id", "", "Access key Id")
 	registerStorageCmd.Flags().String("access-key-secret", "", "Access key secret")
 	registerStorageCmd.Flags().String("endpoint", "", "Endpoint")
+	registerStorageCmd.Flags().String("region", "auto", "Region of storage")
 }

@@ -50,17 +50,17 @@ func RegisterLocalStorage(path string) (*localstorage.LocalStorageRequirements, 
 	return requirements, nil
 }
 
-func RegisterS3Storage(bucket_name string, account_id string, access_key_id string, access_key_secret string, endpoint string) (*s3.S3Requirements, error) {
+func RegisterS3Storage(bucket_name string, access_key_id string, access_key_secret string, endpoint string, region string) (*s3.S3Requirements, error) {
 	requirements := &s3.S3Requirements{}
-	if len(bucket_name) <= 0 || len(account_id) <= 0 || len(access_key_id) <= 0 || len(access_key_secret) <= 0 || len(endpoint) <= 0 {
-		utils.LogError("bucket_name, account_id, access_key_id, access_key_secret, endpoint can't be empty", "Register s3 database", nil)
-		return nil, fmt.Errorf("bucket_name, account_id, access_key_id, access_key_secret, endpoint can't be empty")
+	if len(bucket_name) <= 0 || len(access_key_id) <= 0 || len(access_key_secret) <= 0 || len(region) <= 0 {
+		utils.LogError("bucket_name, access_key_id, access_key_secret, region can't be empty", "Register s3 database", nil)
+		return nil, fmt.Errorf("bucket_name, account_id, access_key_id, access_key_secret, endpoint, region can't be empty")
 	}
 	requirements.BucketName = bucket_name
-	requirements.AccountId = account_id
 	requirements.AccessKeyId = access_key_id
 	requirements.AccessKeySecret = access_key_secret
 	requirements.Endpoint = endpoint
+	requirements.Region = region
 	return requirements, nil
 }
 

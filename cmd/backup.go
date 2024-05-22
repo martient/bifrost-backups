@@ -5,6 +5,7 @@ import (
 
 	localstorage "github.com/martient/bifrost-backup/pkg/local_storage"
 	"github.com/martient/bifrost-backup/pkg/postgresql"
+	"github.com/martient/bifrost-backup/pkg/s3"
 	"github.com/martient/bifrost-backup/pkg/setup"
 	"github.com/martient/golang-utils/utils"
 	"github.com/spf13/cobra"
@@ -54,7 +55,7 @@ var backupCmd = &cobra.Command{
 			case setup.LocalStorage:
 				err = localstorage.StoreBackup(storage.LocalStorage, result)
 			case setup.S3:
-				// No implementation for Sqlite3 backup yet
+				err = s3.StoreBackup(storage.S3, result)
 			}
 			if err != nil {
 				utils.LogError("Something went wrong during the storing process: %s", "CLI", err)
