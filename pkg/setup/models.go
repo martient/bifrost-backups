@@ -3,6 +3,7 @@ package setup
 import (
 	localstorage "github.com/martient/bifrost-backup/pkg/local_storage"
 	"github.com/martient/bifrost-backup/pkg/postgresql"
+	"github.com/martient/bifrost-backup/pkg/s3"
 	"github.com/martient/bifrost-backup/pkg/sqlite3"
 )
 
@@ -24,6 +25,7 @@ type Storage struct {
 	Type         StorageType                           `json:"storage_type"`
 	Name         string                                `json:"name"`
 	LocalStorage localstorage.LocalStorageRequirements `json:"local_storage"`
+	S3           s3.S3Requirements                     `json:"s3"`
 }
 
 type Database struct {

@@ -17,12 +17,6 @@ var registerStorageCmd = &cobra.Command{
 		if disableUpdateCheck, _ := rootCmd.Flags().GetBool("disable-update-check"); !disableUpdateCheck {
 			doConfirmAndSelfUpdate()
 		}
-		// jsonFile, err := os.Open(jsonConfigFile)
-		// if err != nil {
-		// 	utils.LogError("Something went wrong during the config openning", "CLI", err)
-		// 	os.Exit(1)
-		// }
-		// defer jsonFile.Close()
 
 		if interactive, _ := cmd.Flags().GetBool("no-interactive"); !interactive {
 			setup.InteractiveRegisterStorage()
@@ -44,18 +38,27 @@ var registerStorageCmd = &cobra.Command{
 					os.Exit(1)
 				}
 			case 2:
-				println("1")
+				bucket_name, _ := cmd.Flags().GetString("bucket-name")
+				access_key_id, _ := cmd.Flags().GetString("access-key-id")
+				access_key_secret, _ := cmd.Flags().GetString("access-key-secret")
+				endpoint, _ := cmd.Flags().GetString("endpoint")
+				region, _ := cmd.Flags().GetString("region")
+				registered, err := setup.RegisterS3Storage(bucket_name, access_key_id, access_key_secret, endpoint, region)
+				if err != nil {
+					utils.LogError("Your storage haven't been registerd: %s", "CLI", err)
+					os.Exit(1)
+				}
+				name, _ := cmd.Flags().GetString("name")
+				err = setup.RegisterStorage(storage_type, name, registered)
+				if err != nil {
+					utils.LogError("Saved failed: %s", "CLI", err)
+					os.Exit(1)
+				}
 			default:
 				utils.LogWarning("Please choose between the available type of storage with --type", "CLI")
 				os.Exit(-1)
 			}
-
 		}
-		// byteValue, _ := io.ReadAll(jsonFile)
-		// result := environmentmanager.GenerateEnvFile(byteValue, newEnvFilePath, readOnlyEnvFilesPath)
-		// if result != 0 {
-		// 	os.Exit(1)
-		// }
 	},
 }
 
@@ -73,4 +76,11 @@ func init() {
 	registerStorageCmd.Flags().Int64("type", -1, "Database type")
 	registerStorageCmd.Flags().String("name", "default", "Storage name")
 	registerStorageCmd.Flags().String("path", "~/bifrost-backups", "Path for the output target folder in the local storage")
+
+	registerStorageCmd.Flags().String("bucket-name", "", "Bucket name")
+	registerStorageCmd.Flags().String("account-id", "", "Account Id")
+	registerStorageCmd.Flags().String("access-key-id", "", "Access key Id")
+	registerStorageCmd.Flags().String("access-key-secret", "", "Access key secret")
+	registerStorageCmd.Flags().String("endpoint", "", "Endpoint")
+	registerStorageCmd.Flags().String("region", "auto", "Region of storage")
 }

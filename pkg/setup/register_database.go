@@ -111,11 +111,11 @@ func RegisterDatabase(databaseType DatabaseType, name string, cron string, stora
 	}
 
 	alreadyExist := false
-	for i, database := range config.Databases {
-		if database.Name == newDatabase.Name {
+	for i, ite := range config.Databases {
+		if ite.Name == newDatabase.Name {
 			config.Databases[i] = *newDatabase
 			alreadyExist = true
-			utils.LogInfo("Database %s already register, it as been updated", "REGISTER DATABASE", database.Name)
+			utils.LogInfo("Database %s already register, it as been updated", "REGISTER DATABASE", ite.Name)
 			break
 		}
 	}
