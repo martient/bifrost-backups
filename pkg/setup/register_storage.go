@@ -71,11 +71,6 @@ func RegisterStorage(storageType StorageType, name string, storage interface{}) 
 	configMutex.Lock()
 	defer configMutex.Unlock()
 
-	exist := checkIfAlreadyExist(name, config.Storages)
-	if exist {
-		return fmt.Errorf("storage name already used")
-	}
-
 	newStorage := &Storage{
 		Type: storageType,
 		Name: name,
