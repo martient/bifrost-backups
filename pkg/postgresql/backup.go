@@ -21,7 +21,7 @@ func RunBackup(database PostgresqlRequirements) (*bytes.Buffer, error) {
 		return nil, fmt.Errorf("pg_dump command not found: %w", err)
 	}
 
-	args := buildCommandArgs(database)
+	args := buildCommandArgsBackup(database)
 	cmd := exec.Command(pgDumpPath, args...)
 
 	if database.Password != "" {
@@ -50,7 +50,7 @@ func validateRequirements(database PostgresqlRequirements) error {
 	return nil
 }
 
-func buildCommandArgs(database PostgresqlRequirements) []string {
+func buildCommandArgsBackup(database PostgresqlRequirements) []string {
 	var args []string
 
 	if database.Hostname != "" {
