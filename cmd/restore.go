@@ -3,6 +3,7 @@ package cmd
 import (
 	"bytes"
 
+	localstorage "github.com/martient/bifrost-backup/pkg/local_storage"
 	"github.com/martient/bifrost-backup/pkg/postgresql"
 	"github.com/martient/bifrost-backup/pkg/s3"
 	"github.com/martient/bifrost-backup/pkg/setup"
@@ -42,17 +43,19 @@ var restoreCmd = &cobra.Command{
 			}
 			if storage_name != "" && storage_name == storage.Name {
 				switch storage.Type {
-				// case setup.LocalStorage:
-				// 	err = localstorage.RestoreBackup(storage.LocalStorage, result)
+				case setup.LocalStorage:
+					result, err = localstorage.PullBackup(storage.LocalStorage, backup_name)
 				case setup.S3:
 					result, err = s3.PullBackup(storage.S3, backup_name)
+				default:
+					utils.LogError("Unsported storage type used during the restore process...", "CLI", nil)
+					return
 				}
 				if err != nil {
 					utils.LogError("Something went wrong during the retriving process: %s", "CLI", err)
 					return
 				}
 				utils.LogInfo("Backup of %s successfully retrieved with %s", "CLI", database.Name, storage.Name)
-				break
 			}
 		}
 

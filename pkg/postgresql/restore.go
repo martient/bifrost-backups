@@ -22,24 +22,45 @@ func RunRestoration(database PostgresqlRequirements, backup *bytes.Buffer) error
 	if err != nil {
 		return fmt.Errorf("pg_dump command not found: %w", err)
 	}
-	args := buildCommandArgsBackup(database)
+
+	tempFile, err := os.CreateTemp("", "bf_*.sql")
+	if err != nil {
+		return fmt.Errorf("failed to create temporary file: %w", err)
+	}
+	defer os.Remove(tempFile.Name()) // Clean up the temporary file
+
+	// Write the backup buffer to the temporary file
+	_, err = backup.WriteTo(tempFile)
+	if err != nil {
+		return fmt.Errorf("failed to write backup to temporary file: %w", err)
+	}
+
+	// Close the temporary file
+	err = tempFile.Close()
+	if err != nil {
+		return fmt.Errorf("failed to close temporary file: %w", err)
+	}
+
+	args := buildCommandArgsRestore(database, tempFile.Name())
 	cmd := exec.Command(pgRestorePath, args...)
 
 	if database.Password != "" {
 		cmd.Env = os.Environ()
 		cmd.Env = append(cmd.Env, "PGPASSWORD="+database.Password)
 	}
-	cmd.Stdin = backup
+
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
 
 	err = cmd.Run()
 	if err != nil {
-		utils.LogError("Failed to restore database '%s'", "POSTGRESQL", err)
+		utils.LogErrorInterface("Failed to restore database '%s', %s", "POSTGRESQL", stderr.String(), err)
 		return fmt.Errorf("backup failed: %w", err)
 	}
 	return nil
 }
 
-func buildCommandArgsRestore(database PostgresqlRequirements) []string {
+func buildCommandArgsRestore(database PostgresqlRequirements, tempFile string) []string {
 	var args []string
 
 	if database.Hostname != "" {
@@ -54,7 +75,11 @@ func buildCommandArgsRestore(database PostgresqlRequirements) []string {
 		args = append(args, "-U", database.User)
 	}
 
-	args = append(args, database.Name)
+	if database.Name != "" {
+		args = append(args, "-d", database.Name)
+	}
+
+	args = append(args, "--clean", "-v", tempFile)
 
 	return args
 }

@@ -65,16 +65,8 @@ func buildCommandArgsBackup(database PostgresqlRequirements) []string {
 		args = append(args, "-U", database.User)
 	}
 
+	args = append(args, "-F", "t")
 	args = append(args, database.Name)
 
 	return args
 }
-
-// 		fmt.Println(err)
-// 		fmt.Println(string(output))
-// 		utils.LogError("Something went wrong during the execution", "POSTGRESQL", err)
-// 		return err
-// 	}
-// 	fmt.Println(output)
-// 	return nil
-// }
