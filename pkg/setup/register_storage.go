@@ -29,7 +29,7 @@ func InteractiveRegisterStorage() {
 	// defer file.Close()
 
 	if _, err := tea.NewProgram(interactives.LocalStorageInitialModel()).Run(); err != nil {
-		fmt.Printf("could not start program: %s\n", err)
+		utils.LogError("Could not start program: %s\n", "Register datbase", err)
 		os.Exit(1)
 	}
 
@@ -43,8 +43,8 @@ func InteractiveRegisterStorage() {
 func RegisterLocalStorage(path string) (*localstorage.LocalStorageRequirements, error) {
 	requirements := &localstorage.LocalStorageRequirements{}
 	if len(path) <= 0 {
-		utils.LogError("Path can't be empty", "Register postgresql database", nil)
-		return nil, fmt.Errorf("username can't be empty")
+		utils.LogError("Path can't be empty", "Register local storage", nil)
+		return nil, fmt.Errorf("path can't be empty")
 	}
 	requirements.FolderPath = path
 	return requirements, nil

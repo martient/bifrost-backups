@@ -76,18 +76,19 @@ func upload(client *s3.Client, bucket_name string, buffer *bytes.Buffer) error {
 	})
 	_, err := uploader.Upload(context.TODO(), &s3.PutObjectInput{
 		Bucket: aws.String(bucket_name),
-		Key: aws.String(fmt.Sprintf("%d-%02d-%02dT%02d:%02d:%03dZ",
+		Key: aws.String(fmt.Sprintf("%04d-%02d-%02dT%02d:%02d:%02dZ",
 			currentTime.Year(),
 			currentTime.Month(),
 			currentTime.Day(),
 			currentTime.Hour(),
 			currentTime.Minute(),
 			currentTime.Second())),
+
 		Body: largeBuffer,
 	})
 	if err != nil {
 		log.Printf("Couldn't upload large object to %v:%v. Here's why: %v\n",
-			bucket_name, fmt.Sprintf("%d-%02d-%02dT%02d:%02d:%03dZ",
+			bucket_name, fmt.Sprintf("%04d-%02d-%02dT%02d:%02d:%02dZ",
 				currentTime.Year(),
 				currentTime.Month(),
 				currentTime.Day(),

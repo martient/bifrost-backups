@@ -28,13 +28,13 @@ var registerStorageCmd = &cobra.Command{
 				path, _ := cmd.Flags().GetString("path")
 				registered, err := setup.RegisterLocalStorage(path)
 				if err != nil {
-					utils.LogError("Your storage haven't been registerd", "CLI", err)
+					utils.LogError("Your storage haven't been registerd: %s", "CLI", err)
 					os.Exit(1)
 				}
 				name, _ := cmd.Flags().GetString("name")
 				err = setup.RegisterStorage(storage_type, name, registered)
 				if err != nil {
-					utils.LogError("Saved failed", "CLI", err)
+					utils.LogError("Saved failed: %s", "CLI", err)
 					os.Exit(1)
 				}
 			case 2:

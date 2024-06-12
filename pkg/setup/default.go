@@ -43,7 +43,7 @@ func generateDefaultConfig(current_version string) {
 		defer file.Close()
 		utils.LogInfo("Config file created at:", "SETUP", configFilePath)
 	} else {
-		utils.LogInfo("config file already exist", "SETUP")
+		utils.LogInfo("Config file already exist", "SETUP")
 		return
 	}
 
