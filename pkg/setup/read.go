@@ -29,6 +29,22 @@ func readConfig() (Config, error) {
 	}
 	return config, nil
 }
+
+func GetDatabaseConfigName() ([]string, error) {
+	config, err := readConfig()
+	var names []string
+
+	if err != nil {
+		return nil, err
+	}
+	for i := 0; i < len(config.Databases); i++ {
+		if config.Databases[i].Name != "" {
+			names = append(names, config.Databases[i].Name)
+		}
+	}
+	return names, nil
+}
+
 func ReadDatabaseConfig(name string) (Database, error) {
 	config, err := readConfig()
 

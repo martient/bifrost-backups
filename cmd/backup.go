@@ -20,48 +20,64 @@ var backupCmd = &cobra.Command{
 			doConfirmAndSelfUpdate()
 		}
 
+		var names []string
+
 		name, err := cmd.Flags().GetString("name")
-		if err != nil && name == "" {
-			utils.LogError("name can't be empty", "CLI", err)
-			return
+		if name == "" {
+			utils.LogInfo("getting backups source", "CLI", err)
+			fetched_names, err := setup.GetDatabaseConfigName()
+			if err != nil {
+				utils.LogError("Something went wrong during the config reading: %s", "CLI", err)
+				return
+			} else if len(fetched_names) == 0 {
+				utils.LogWarning("No backup source found", "CLI")
+				return
+			}
+			names = append(names, fetched_names...)
+		} else {
+			names = append(names, name)
 		}
 
-		database, err := setup.ReadDatabaseConfig(name)
-		if err != nil {
-			utils.LogError("Something went wrong during the config reading: %s", "CLI", err)
-			return
-		}
+		for i := 0; i < len(names); i++ {
+			name = names[i]
 
-		var result *bytes.Buffer
-
-		switch database.Type {
-		case setup.Postgresql:
-			result, err = postgresql.RunBackup(database.Postgresql)
-		case setup.Sqlite3:
-			// No implementation for Sqlite3 backup yet
-		}
-
-		if err != nil {
-			utils.LogError("Something went wrong during the backuping process: %s", "CLI", err)
-			return
-		}
-		for i := 0; i < len(database.Storages); i++ {
-			storage, err := setup.ReadStorageConfig(database.Storages[i])
+			database, err := setup.ReadDatabaseConfig(name)
 			if err != nil {
 				utils.LogError("Something went wrong during the config reading: %s", "CLI", err)
 				return
 			}
-			switch storage.Type {
-			case setup.LocalStorage:
-				err = localstorage.StoreBackup(storage.LocalStorage, result)
-			case setup.S3:
-				err = s3.StoreBackup(storage.S3, result)
+
+			var result *bytes.Buffer
+
+			switch database.Type {
+			case setup.Postgresql:
+				result, err = postgresql.RunBackup(database.Postgresql)
+			case setup.Sqlite3:
+				// No implementation for Sqlite3 backup yet
 			}
+
 			if err != nil {
-				utils.LogError("Something went wrong during the storing process: %s", "CLI", err)
+				utils.LogError("Something went wrong during the backuping process: %s", "CLI", err)
 				return
 			}
-			utils.LogInfo("Backup of %s successfully stored with %s", "CLI", database.Name, storage.Name)
+			for i := 0; i < len(database.Storages); i++ {
+				storage, err := setup.ReadStorageConfig(database.Storages[i])
+				if err != nil {
+					utils.LogError("Something went wrong during the config reading: %s", "CLI", err)
+					return
+				}
+				switch storage.Type {
+				case setup.LocalStorage:
+					err = localstorage.StoreBackup(storage.LocalStorage, result)
+				case setup.S3:
+					err = s3.StoreBackup(storage.S3, result)
+				}
+				if err != nil {
+					utils.LogError("Something went wrong during the storing process: %s", "CLI", err)
+					return
+				}
+				utils.LogInfo("Backup of %s successfully stored with %s", "CLI", database.Name, storage.Name)
+			}
 		}
 	},
 }
