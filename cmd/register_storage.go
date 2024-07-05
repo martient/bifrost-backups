@@ -87,5 +87,5 @@ func init() {
 	registerStorageCmd.Flags().String("access-key-secret", "", "Access key secret")
 	registerStorageCmd.Flags().String("endpoint", "", "Endpoint")
 	registerStorageCmd.Flags().String("region", "auto", "Region of storage")
-	registerStorageCmd.Flags().String("cipher-key", "", "Bring you own cipher key or leave it empty to generate one")
+	registerStorageCmd.Flags().String("cipher-key", "", "Bring you own cipher key (AES256 32bits) or leave it empty to generate one")
 }
