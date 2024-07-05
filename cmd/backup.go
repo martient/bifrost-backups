@@ -2,7 +2,9 @@ package cmd
 
 import (
 	"bytes"
+	"encoding/base64"
 
+	"github.com/martient/bifrost-backup/pkg/crypto"
 	localstorage "github.com/martient/bifrost-backup/pkg/local_storage"
 	"github.com/martient/bifrost-backup/pkg/postgresql"
 	"github.com/martient/bifrost-backup/pkg/s3"
@@ -66,9 +68,19 @@ var backupCmd = &cobra.Command{
 					utils.LogError("Something went wrong during the config reading: %s", "CLI", err)
 					return
 				}
+				cipher_key, err := base64.StdEncoding.DecodeString(storage.CipherKey)
+				if err != nil {
+					utils.LogError("Something went wrong during the convertion of the cipher key process: %s", "CLI", err)
+					return
+				}
+				cipher_result, err := crypto.Cipher(cipher_key, result.Bytes())
+				if err != nil {
+					utils.LogError("Something went wrong during the encryption process: %s", "CLI", err)
+					return
+				}
 				switch storage.Type {
 				case setup.LocalStorage:
-					err = localstorage.StoreBackup(storage.LocalStorage, result)
+					err = localstorage.StoreBackup(storage.LocalStorage, cipher_result)
 				case setup.S3:
 					err = s3.StoreBackup(storage.S3, result)
 				}
