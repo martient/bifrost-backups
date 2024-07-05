@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"bytes"
+	"encoding/base64"
 
 	"github.com/martient/bifrost-backup/pkg/crypto"
 	localstorage "github.com/martient/bifrost-backup/pkg/local_storage"
@@ -35,7 +36,7 @@ var restoreCmd = &cobra.Command{
 		storage_name, _ := cmd.Flags().GetString("storage-name")
 		backup_name, _ := cmd.Flags().GetString("backup-name")
 		var result *bytes.Buffer
-		var cipher_key string
+		var cipher_key []byte
 
 		for i := 0; i < len(database.Storages); i++ {
 			storage, err := setup.ReadStorageConfig(database.Storages[i])
@@ -46,10 +47,18 @@ var restoreCmd = &cobra.Command{
 			if storage_name != "" && storage_name == storage.Name {
 				switch storage.Type {
 				case setup.LocalStorage:
-					cipher_key = storage.CipherKey
+					cipher_key, err = base64.StdEncoding.DecodeString(storage.CipherKey)
+					if err != nil {
+						utils.LogError("Something went wrong during the convertion of the cipher key process: %s", "CLI", err)
+						return
+					}
 					result, err = localstorage.PullBackup(storage.LocalStorage, backup_name)
 				case setup.S3:
-					cipher_key = storage.CipherKey
+					cipher_key, err = base64.StdEncoding.DecodeString(storage.CipherKey)
+					if err != nil {
+						utils.LogError("Something went wrong during the convertion of the cipher key process: %s", "CLI", err)
+						return
+					}
 					result, err = s3.PullBackup(storage.S3, backup_name)
 				default:
 					utils.LogError("Unsupported storage type used during the restore process...", "CLI", nil)
@@ -68,7 +77,7 @@ var restoreCmd = &cobra.Command{
 			return
 		}
 
-		decipher_result, err := crypto.Decipher([]byte(cipher_key), result.Bytes())
+		decipher_result, err := crypto.Decipher(cipher_key, result.Bytes())
 		if err != nil {
 			utils.LogError("Something went wrong during the encryption process: %s", "CLI", err)
 			return
