@@ -67,6 +67,9 @@ func ReadStorageConfig(name string) (Storage, error) {
 	}
 	for i := 0; i < len(config.Storages); i++ {
 		if config.Storages[i].Name == name {
+			if config.Storages[i].RetentionDays == 0 {
+				config.Storages[i].RetentionDays = 21 // Default retention period is 21 days
+			}
 			return config.Storages[i], nil
 		}
 	}

@@ -21,6 +21,7 @@ func generateDefaultConfig(current_version string) {
 		LocalStorage: localstorage.LocalStorageRequirements{
 			FolderPath: filepath.Join(homeDir, ".bifrost-backups"),
 		},
+		RetentionDays: 21,
 	})
 
 	if err != nil {

@@ -32,7 +32,8 @@ var registerStorageCmd = &cobra.Command{
 					os.Exit(1)
 				}
 				name, _ := cmd.Flags().GetString("name")
-				err = setup.RegisterStorage(storage_type, name, registered)
+				retention, _ := cmd.Flags().GetInt("retention")
+				err = setup.RegisterStorage(storage_type, name, retention, registered)
 				if err != nil {
 					utils.LogError("Saved failed: %s", "CLI", err)
 					os.Exit(1)
@@ -49,7 +50,8 @@ var registerStorageCmd = &cobra.Command{
 					os.Exit(1)
 				}
 				name, _ := cmd.Flags().GetString("name")
-				err = setup.RegisterStorage(storage_type, name, registered)
+				retention, _ := cmd.Flags().GetInt("retention")
+				err = setup.RegisterStorage(storage_type, name, retention, registered)
 				if err != nil {
 					utils.LogError("Saved failed: %s", "CLI", err)
 					os.Exit(1)
@@ -76,7 +78,7 @@ func init() {
 	registerStorageCmd.Flags().Int64("type", -1, "Database type")
 	registerStorageCmd.Flags().String("name", "default", "Storage name")
 	registerStorageCmd.Flags().String("path", "~/bifrost-backups", "Path for the output target folder in the local storage")
-
+	registerStorageCmd.Flags().Int("retention", 21, "How many days do you want to keep the backup")
 	registerStorageCmd.Flags().String("bucket-name", "", "Bucket name")
 	registerStorageCmd.Flags().String("account-id", "", "Account Id")
 	registerStorageCmd.Flags().String("access-key-id", "", "Access key Id")
