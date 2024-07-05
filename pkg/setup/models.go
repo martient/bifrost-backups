@@ -24,6 +24,7 @@ const (
 type Storage struct {
 	Type          StorageType                           `json:"storage_type"`
 	Name          string                                `json:"name"`
+	CipherKey     string                                `json:"cypher_key"`
 	RetentionDays int                                   `json:"retention_days" default:"21"`
 	LocalStorage  localstorage.LocalStorageRequirements `json:"local_storage"`
 	S3            s3.S3Requirements                     `json:"s3"`

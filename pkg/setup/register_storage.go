@@ -6,6 +6,7 @@ import (
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/martient/bifrost-backup/pkg/crypto"
 	localstorage "github.com/martient/bifrost-backup/pkg/local_storage"
 	"github.com/martient/bifrost-backup/pkg/s3"
 	"github.com/martient/bifrost-backup/pkg/setup/interactives"
@@ -64,17 +65,27 @@ func RegisterS3Storage(bucket_name string, access_key_id string, access_key_secr
 	return requirements, nil
 }
 
-func RegisterStorage(storageType StorageType, name string, retention int, storage interface{}) error {
+func RegisterStorage(storageType StorageType, name string, retention int, cipher_key string, storage interface{}) error {
 	if storage == nil {
 		return fmt.Errorf("storage is null")
 	}
 	configMutex.Lock()
 	defer configMutex.Unlock()
 
+	var err error
+
+	if cipher_key == "" {
+		cipher_key, err = crypto.GenerateCipherKey(32)
+		if err != nil {
+			return errors.Wrap(err, "could not generate cipher key")
+		}
+	}
+
 	newStorage := &Storage{
 		Type:          storageType,
 		Name:          name,
 		RetentionDays: retention,
+		CipherKey:     cipher_key,
 	}
 
 	switch db := storage.(type) {
