@@ -9,6 +9,7 @@ import (
 	"github.com/martient/bifrost-backup/pkg/postgresql"
 	"github.com/martient/bifrost-backup/pkg/s3"
 	"github.com/martient/bifrost-backup/pkg/setup"
+	"github.com/martient/bifrost-backup/pkg/sqlite3"
 	"github.com/martient/golang-utils/utils"
 	"github.com/spf13/cobra"
 )
@@ -55,7 +56,7 @@ var backupCmd = &cobra.Command{
 			case setup.Postgresql:
 				result, err = postgresql.RunBackup(database.Postgresql)
 			case setup.Sqlite3:
-				// No implementation for Sqlite3 backup yet
+				result, err = sqlite3.RunBackup(database.Sqlite3)
 			}
 
 			if err != nil {
