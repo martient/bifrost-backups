@@ -24,6 +24,9 @@ postgresql:
 sqlite3:
 - pkg/sqlite3
 
+cypto:
+- pkg/crypto
+
 localStorage:
 - pkg/local_storage
 
