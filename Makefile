@@ -1,7 +1,7 @@
 all: run
 
 build:
-	go build -o bin/bifrost-env-manager
+	go build -o bin/bifrost-backups
 
 run: build
-	./bin/bifrost-env-manager
+	./bin/bifrost-backups
