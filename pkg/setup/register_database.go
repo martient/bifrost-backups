@@ -16,30 +16,11 @@ import (
 )
 
 func InteractiveRegisterDatabase() {
-	// homeDir, err := os.UserHomeDir()
-	// if err != nil {
-	// 	fmt.Println("Error getting home directory:", err)
-	// 	return
-	// }
-	// configFilePath := filepath.Join(homeDir, ".config", "bifrost_backups.json")
-
-	// file, err := os.OpenFile(configFilePath, os.O_RDWR|os.O_TRUNC, 0644)
-	// if err != nil {
-	// 	fmt.Println("Error opening config file:", err)
-	// 	return
-	// }
-	// defer file.Close()
 
 	if _, err := tea.NewProgram(interactives.PostgresqlInitialModel()).Run(); err != nil {
 		utils.LogError("Could not start program: %s\n", "Register datbase", err)
 		os.Exit(1)
 	}
-
-	// encoder := json.NewEncoder(file)
-	// if err := encoder.Encode(config); err != nil {
-	// 	fmt.Println("Error encoding JSON:", err)
-	// 	return
-	// }
 }
 
 func RegisterPostgresqlDatabase(host string, user string, name string, password string) (*postgresql.PostgresqlRequirements, error) {
@@ -53,6 +34,15 @@ func RegisterPostgresqlDatabase(host string, user string, name string, password 
 	requirements.User = user
 	requirements.Name = name
 	requirements.Password = password
+	return requirements, nil
+}
+
+func RegisterSqlite3Database(path string) (*sqlite3.Sqlite3Requirements, error) {
+	requirements := &sqlite3.Sqlite3Requirements{}
+	if len(path) <= 0 {
+		return nil, fmt.Errorf("path can't be empty")
+	}
+	requirements.Path = path
 	return requirements, nil
 }
 
