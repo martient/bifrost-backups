@@ -2,16 +2,22 @@ package setup
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"path/filepath"
 
+	"github.com/martient/bifrost-backup/pkg/crypto"
 	localstorage "github.com/martient/bifrost-backup/pkg/local_storage"
 	"github.com/martient/golang-utils/utils"
 )
 
 func generateDefaultConfig(current_version string) {
 	config := &Config{}
+
+	cipher_key, err := crypto.GenerateCipherKey(32)
+	if err != nil {
+		utils.LogError("could not generate cipher key", "DEFAULT_CONFIG", err)
+		return
+	}
 
 	homeDir, err := os.UserHomeDir()
 	config.Version = current_version
@@ -21,10 +27,12 @@ func generateDefaultConfig(current_version string) {
 		LocalStorage: localstorage.LocalStorageRequirements{
 			FolderPath: filepath.Join(homeDir, ".bifrost-backups"),
 		},
+		RetentionDays: 21,
+		CipherKey:     cipher_key,
 	})
 
 	if err != nil {
-		fmt.Println("Error getting home directory:", err)
+		utils.LogError("Error getting home directory:", "DEFAULT_CONFIG", err)
 		return
 	}
 	configFilePath := filepath.Join(homeDir, ".config", "bifrost_backups.json")
