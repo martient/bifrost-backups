@@ -101,6 +101,6 @@ var restoreCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(restoreCmd)
 	restoreCmd.Flags().String("name", "", "Database name")
-	restoreCmd.Flags().String("storage-name", "", "You must define a specific storage otherwise it gonna take the first found (not handled yet)")
-	restoreCmd.Flags().String("backup-name", "", "Backup name on your storage solution (not handled yet)")
+	restoreCmd.Flags().String("storage-name", "", "You must define a specific storage otherwise it gonna take the first found")
+	restoreCmd.Flags().String("backup-name", "", "Backup name on your storage solution")
 }
