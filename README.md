@@ -8,15 +8,15 @@ Bifrost-backups is a powerful tool designed to simplify backup setup in producti
 
 ### Backup Process
 1. Database (PostgreSQL, SQLite3, etc.) → Dump
-2. Dump → Encryption
-3. Encrypted Dump → Upload
+2. Dump → Cipher
+3. Ciphered Dump → Upload
 4. Apply Retention Policy
 5. Cleanup
 
 ### Restoration Process
 1. Search registered storage
 2. Download latest backup (or specified version)
-3. Decrypt backup
+3. Decipher backup
 4. Restore database
 
 ### Retention Policy
