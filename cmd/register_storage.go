@@ -18,7 +18,7 @@ var registerStorageCmd = &cobra.Command{
 			doConfirmAndSelfUpdate()
 		}
 
-		if interactive, _ := cmd.Flags().GetBool("no-interactive"); !interactive {
+		if interactive, _ := cmd.Flags().GetBool("interactive"); interactive {
 			setup.InteractiveRegisterStorage()
 		} else {
 			storage_int, _ := cmd.Flags().GetInt64("type")
@@ -76,7 +76,7 @@ func init() {
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	registerStorageCmd.Flags().BoolP("no-interactive", "i", false, "Use the interactive mode")
+	registerStorageCmd.Flags().BoolP("interactive", "i", false, "Use the interactive mode")
 	registerStorageCmd.Flags().Int64("type", -1, "Database type")
 	registerStorageCmd.Flags().String("name", "default", "Storage name")
 	registerStorageCmd.Flags().String("path", "~/bifrost-backups", "Path for the output target folder in the local storage")
