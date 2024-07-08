@@ -131,7 +131,7 @@ Flags:
       --endpoint string            Endpoint
   -h, --help                       Help for register-storage
       --name string                Storage name (default "default")
-  -i, --no-interactive             Use interactive mode
+  -i, --interactive             Use interactive mode
       --path string                Path for local storage output (default "~/bifrost-backups")
       --region string              Storage region (default "auto")
       --retention int              Backup retention period in days (default 21)

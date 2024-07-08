@@ -12,7 +12,6 @@
             "program": "${workspaceFolder}/main.go",
             "args": [
                 "register-database",
-                "--no-interactive",
                 "--type",
                 "1",
                 "--name",
@@ -32,7 +31,6 @@
             "program": "${workspaceFolder}/main.go",
             "args": [
                 "register-storage",
-                "--no-interactive",
                 "--type",
                 "2",
                 "--name",
