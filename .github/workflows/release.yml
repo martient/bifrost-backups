@@ -63,6 +63,8 @@ jobs:
           cache-to: type=gha,mode=max
           build-args: |
             VERSION=${{ github.event.release.tag_name }}
+      - name: Build
+        run: go build -o bifrost-backups .
       - name: Release
         uses: goreleaser/goreleaser-action@v4
         with:
