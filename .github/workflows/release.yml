@@ -63,6 +63,8 @@ jobs:
           cache-to: type=gha,mode=max
           build-args: |
             VERSION=${{ github.event.release.tag_name }}
+          outputs:
+            digest: ${{ steps.build-and-push.outputs.digest }}
       - name: Sign the published Docker image
         if: ${{ github.ref_name == 'main' }}
         env:
