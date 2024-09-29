@@ -56,21 +56,13 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
             VERSION=${{ github.event.release.tag_name }}
-          outputs:
-            digest: ${{ steps.build-and-push.outputs.digest }}
-      - name: Sign the published Docker image
-        if: ${{ github.ref_name == 'main' }}
-        env:
-          TAGS: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-          DIGEST: ${{ steps.build-and-push.outputs.digest }}
-        run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
       - name: Release
         uses: goreleaser/goreleaser-action@v4
         with:
