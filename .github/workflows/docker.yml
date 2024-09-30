@@ -37,4 +37,4 @@ jobs:
       uses: docker/build-push-action@v6
       with:
         push: true
-        tags: ${{ IMAGE_NAME }}:latest,${{ IMAGE_NAME }}:${{ github.sha }}
+        tags: martient/bifrost-backups:latest, martient/bifrost-backups:${{ github.sha }}
