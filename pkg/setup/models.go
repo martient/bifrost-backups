@@ -26,6 +26,7 @@ type Storage struct {
 	Name          string                                `json:"name"`
 	CipherKey     string                                `json:"cypher_key"`
 	RetentionDays int                                   `json:"retention_days" default:"21"`
+	Compression   bool                                  `json:"compression" default:"true"`
 	LocalStorage  localstorage.LocalStorageRequirements `json:"local_storage"`
 	S3            s3.S3Requirements                     `json:"s3"`
 }
