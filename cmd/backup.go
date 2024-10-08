@@ -81,9 +81,9 @@ var backupCmd = &cobra.Command{
 				}
 				switch storage.Type {
 				case setup.LocalStorage:
-					err = localstorage.StoreBackup(storage.LocalStorage, cipher_result)
+					err = localstorage.StoreBackup(storage.LocalStorage, cipher_result, storage.Compression)
 				case setup.S3:
-					err = s3.StoreBackup(storage.S3, result)
+					err = s3.StoreBackup(storage.S3, result, storage.Compression)
 				}
 				if err != nil {
 					utils.LogError("Something went wrong during the storing process: %s", "CLI", err)

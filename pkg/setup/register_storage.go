@@ -65,7 +65,7 @@ func RegisterS3Storage(bucket_name string, access_key_id string, access_key_secr
 	return requirements, nil
 }
 
-func RegisterStorage(storageType StorageType, name string, retention int, cipher_key string, storage interface{}) error {
+func RegisterStorage(storageType StorageType, name string, retention int, cipher_key string, compression bool, storage interface{}) error {
 	if storage == nil {
 		return fmt.Errorf("storage is null")
 	}
@@ -86,6 +86,7 @@ func RegisterStorage(storageType StorageType, name string, retention int, cipher
 		Name:          name,
 		RetentionDays: retention,
 		CipherKey:     cipher_key,
+		Compression:   compression,
 	}
 
 	switch db := storage.(type) {
