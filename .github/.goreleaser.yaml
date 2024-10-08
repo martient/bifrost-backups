@@ -12,7 +12,7 @@ builds:
     # Default: os.Environ() ++ env config section
     # Templates: allowed (since v1.14)
     env:
-      - CGO_ENABLED=0
+      - CGO_ENABLED=1
       # complex, templated envs (v1.14+):
       - >-
         {{- if eq .Os "darwin" }}
