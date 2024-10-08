@@ -19,7 +19,7 @@ func getBackupPath(path string) (string, error) {
 	}
 	var out bytes.Buffer
 
-	cmd := exec.Command("sh", "-c", "ls -Art ~/.bifrost-backups/ | tail -n 1")
+	cmd := exec.Command("sh", "-c", fmt.Sprintf("ls -Art %s | tail -n 1", path))
 
 	cmd.Stdout = &out
 
@@ -27,13 +27,12 @@ func getBackupPath(path string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
 	utils.LogDebug("Latest file: %s", "LOCAL-STORAGE", out.String())
 	if out.String() == "" {
 		return "", fmt.Errorf("no backups found in folder %s", path)
 	}
 
-	return out.String(), nil
+	return strings.TrimSuffix(out.String(), "\n"), nil
 }
 
 func PullBackup(storage LocalStorageRequirements, backup_name string, useCompression bool) (*bytes.Buffer, error) {
