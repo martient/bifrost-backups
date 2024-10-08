@@ -53,14 +53,14 @@ var restoreCmd = &cobra.Command{
 						utils.LogError("Something went wrong during the convertion of the cipher key process: %s", "CLI", err)
 						return
 					}
-					result, err = localstorage.PullBackup(storage.LocalStorage, backup_name)
+					result, err = localstorage.PullBackup(storage.LocalStorage, backup_name, storage.Compression)
 				case setup.S3:
 					cipher_key, err = base64.StdEncoding.DecodeString(storage.CipherKey)
 					if err != nil {
 						utils.LogError("Something went wrong during the convertion of the cipher key process: %s", "CLI", err)
 						return
 					}
-					result, err = s3.PullBackup(storage.S3, backup_name)
+					result, err = s3.PullBackup(storage.S3, backup_name, storage.Compression)
 				default:
 					utils.LogError("Unsupported storage type used during the restore process...", "CLI", nil)
 					return

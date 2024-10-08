@@ -34,7 +34,8 @@ var registerStorageCmd = &cobra.Command{
 				name, _ := cmd.Flags().GetString("name")
 				retention, _ := cmd.Flags().GetInt("retention")
 				cipher_key, _ := cmd.Flags().GetString("cipher-key")
-				err = setup.RegisterStorage(storage_type, name, retention, cipher_key, registered)
+				compression, _ := cmd.Flags().GetBool("compression")
+				err = setup.RegisterStorage(storage_type, name, retention, cipher_key, compression, registered)
 				if err != nil {
 					utils.LogError("Saved failed: %s", "CLI", err)
 					os.Exit(1)
@@ -53,7 +54,8 @@ var registerStorageCmd = &cobra.Command{
 				name, _ := cmd.Flags().GetString("name")
 				retention, _ := cmd.Flags().GetInt("retention")
 				cipher_key, _ := cmd.Flags().GetString("cipher-key")
-				err = setup.RegisterStorage(storage_type, name, retention, cipher_key, registered)
+				compression, _ := cmd.Flags().GetBool("compression")
+				err = setup.RegisterStorage(storage_type, name, retention, cipher_key, compression, registered)
 				if err != nil {
 					utils.LogError("Saved failed: %s", "CLI", err)
 					os.Exit(1)
@@ -88,4 +90,5 @@ func init() {
 	registerStorageCmd.Flags().String("endpoint", "", "Endpoint")
 	registerStorageCmd.Flags().String("region", "auto", "Region of storage")
 	registerStorageCmd.Flags().String("cipher-key", "", "Bring you own cipher key (AES256 32bits) or leave it empty to generate one")
+	registerStorageCmd.Flags().Bool("compression", true, "Enable compression (default: true)")
 }

@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/DataDog/zstd"
 	"github.com/martient/golang-utils/utils"
 )
 
@@ -18,7 +19,7 @@ func getBackupPath(path string) (string, error) {
 	}
 	var out bytes.Buffer
 
-	cmd := exec.Command("sh", "-c", "ls -Art ~/.bifrost-backups/ | tail -n 1")
+	cmd := exec.Command("sh", "-c", fmt.Sprintf("ls -Art %s | tail -n 1", path))
 
 	cmd.Stdout = &out
 
@@ -26,16 +27,15 @@ func getBackupPath(path string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
 	utils.LogDebug("Latest file: %s", "LOCAL-STORAGE", out.String())
 	if out.String() == "" {
 		return "", fmt.Errorf("no backups found in folder %s", path)
 	}
 
-	return out.String(), nil
+	return strings.TrimSuffix(out.String(), "\n"), nil
 }
 
-func PullBackup(storage LocalStorageRequirements, backup_name string) (*bytes.Buffer, error) {
+func PullBackup(storage LocalStorageRequirements, backup_name string, useCompression bool) (*bytes.Buffer, error) {
 	if storage == (LocalStorageRequirements{}) {
 		return nil, fmt.Errorf("storage can't be empty")
 	}
@@ -49,8 +49,6 @@ func PullBackup(storage LocalStorageRequirements, backup_name string) (*bytes.Bu
 		}
 	}
 
-	buf := bytes.NewBuffer(nil)
-
 	filePath := strings.TrimSuffix(filepath.Join(storage.FolderPath, latestBackupKey), "\n")
 
 	file, err := os.OpenFile(filePath, os.O_RDONLY, 0644)
@@ -59,7 +57,16 @@ func PullBackup(storage LocalStorageRequirements, backup_name string) (*bytes.Bu
 	}
 	defer file.Close()
 
-	_, err = io.Copy(buf, file)
+	var reader io.Reader = file
+
+	if useCompression {
+		zReader := zstd.NewReader(file)
+		defer zReader.Close()
+		reader = zReader
+	}
+	buf := new(bytes.Buffer)
+
+	_, err = io.Copy(buf, reader)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read file %s from folder %s: %v", latestBackupKey, storage.FolderPath, err)
 	}
