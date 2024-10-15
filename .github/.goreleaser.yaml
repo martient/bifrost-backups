@@ -1,19 +1,23 @@
-builds:
-  # You can have multiple builds defined as a yaml list
-  - #
-    # ID of the build.
-    #
-    # Default: Binary name
-    id: "bifrost-backups"
+# This is an example .goreleaser.yml file with some sensible defaults.
+# Make sure to check the documentation at https://goreleaser.com
 
-    # Custom environment variables to be set during the builds.
-    # Invalid environment variables will be ignored.
-    #
-    # Default: os.Environ() ++ env config section
-    # Templates: allowed (since v1.14)
-    env:
-      - CGO_ENABLED=1
-      # complex, templated envs (v1.14+):
+# The lines below are called `modelines`. See `:help modeline`
+# Feel free to remove those if you don't want/need to use them.
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+
+version: 2
+
+before:
+  hooks:
+    # You may remove this if you don't use go modules.
+    - go mod tidy
+    # you may remove this if you don't need go generate
+    - go generate ./...
+
+builds:
+  - env:
+      - CGO_ENABLED=0
       - >-
         {{- if eq .Os "darwin" }}
           {{- if eq .Arch "amd64"}}CC=o64-clang{{- end }}
@@ -22,3 +26,20 @@ builds:
         {{- if eq .Os "windows" }}
           {{- if eq .Arch "amd64" }}CC=x86_64-w64-mingw32-gcc{{- end }}
         {{- end }}
+    goos:
+      - linux
+      - windows
+      - darwin
+
+archives:
+  - format: tar.gz
+    format_overrides:
+      - goos: windows
+        format: zip
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"

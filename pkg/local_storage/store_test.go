@@ -3,12 +3,13 @@ package localstorage
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
 
-	"github.com/DataDog/zstd"
+	"github.com/klauspost/compress/zstd"
 )
 
 func TestStoreBackup(t *testing.T) {
@@ -84,7 +85,18 @@ func TestStoreBackup(t *testing.T) {
 			t.Errorf("Error reading backup file: %v", err)
 		}
 		// Decompress the data
-		decompressed, err := zstd.Decompress(nil, data)
+		decoder, err := zstd.NewReader(nil)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer decoder.Close()
+
+		// Decompress the data
+		decompressed, err := decoder.DecodeAll(data, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+
 		if err != nil {
 			t.Errorf("Error decompressing backup file: %v", err)
 		}
