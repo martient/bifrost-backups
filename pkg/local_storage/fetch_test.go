@@ -3,11 +3,11 @@ package localstorage
 import (
 	"fmt"
 
-	"github.com/DataDog/zstd"
-
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/klauspost/compress/zstd"
 )
 
 func TestGetBackupPath(t *testing.T) {
@@ -129,11 +129,16 @@ func TestPullBackup(t *testing.T) {
 		// Create a test backup file
 		backupFile := filepath.Join(tempDir, "test_backup.json.zst")
 		data := []byte("test backup data")
-		compressedData, err := zstd.CompressLevel(nil, data, 1)
+		encoder, err := zstd.NewWriter(nil)
 		if err != nil {
 			t.Fatal(err)
 		}
-		err = os.WriteFile(backupFile, compressedData, 0644)
+		defer encoder.Close()
+
+		// Compress the input string
+		compressed := encoder.EncodeAll([]byte(data), nil)
+
+		err = os.WriteFile(backupFile, compressed, 0644)
 		if err != nil {
 			t.Fatal(err)
 		}

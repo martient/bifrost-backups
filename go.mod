@@ -1,17 +1,17 @@
 module github.com/martient/bifrost-backup
 
-go 1.21
+go 1.23
 
 toolchain go1.23.2
 
 require (
-	github.com/DataDog/zstd v1.5.6
 	github.com/aws/smithy-go v1.22.0
 	github.com/blang/semver v3.5.1+incompatible
 	github.com/charmbracelet/bubbles v0.20.0
 	github.com/charmbracelet/bubbletea v1.1.1
 	github.com/charmbracelet/lipgloss v0.13.0
 	github.com/getsentry/sentry-go v0.29.0
+	github.com/klauspost/compress v1.17.11
 	github.com/martient/golang-utils v1.4.0
 	github.com/rhysd/go-github-selfupdate v1.2.3
 	github.com/spf13/cobra v1.8.1

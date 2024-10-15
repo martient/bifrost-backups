@@ -7,9 +7,9 @@ import (
 	"io"
 	"time"
 
-	"github.com/DataDog/zstd"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/klauspost/compress/zstd"
 )
 
 func getBackupKey(client *s3.Client, bucket_name string) (string, error) {
@@ -87,8 +87,14 @@ func PullBackup(storage S3Requirements, backup_name string, useCompression bool)
 	var reader io.Reader = obj.Body
 
 	if useCompression {
-		zReader := zstd.NewReader(obj.Body)
+		// Create a new Zstandard decompression reader
+		zReader, err := zstd.NewReader(obj.Body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create new reader object %s from bucket %s: %v", latestBackupKey, storage.BucketName, err)
+		}
 		defer zReader.Close()
+
+		// Use the zstd reader for decompression
 		reader = zReader
 	}
 
