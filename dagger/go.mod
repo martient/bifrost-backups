@@ -1,6 +1,6 @@
 module dagger/bifrost-backups
 
-go 1.23.1
+go 1.23.0
 
 require (
 	github.com/99designs/gqlgen v0.17.49

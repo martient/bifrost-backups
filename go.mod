@@ -1,8 +1,8 @@
 module github.com/martient/bifrost-backup
 
-go 1.23
+go 1.23.0
 
-toolchain go1.23.2
+toolchain go1.23.0
 
 require (
 	github.com/aws/smithy-go v1.22.0
