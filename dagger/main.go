@@ -34,7 +34,7 @@ func (m *BifrostBackups) Test(ctx context.Context, source *dagger.Directory) (st
 func (m *BifrostBackups) BuildEnv(source *dagger.Directory) *dagger.Container {
 	goCache := dag.CacheVolume("go")
 	return dag.Container().
-		From("golang:1.23-alpine"). // Updated to Go 1.23
+		From("golang:1.23.0-alpine"). // Updated to Go 1.23
 		// From("ghcr.io/goreleaser/goreleaser-cross:v1.23"). // Updated to Go 1.23
 		WithMountedDirectory("/app", source).
 		WithWorkdir("/app").
@@ -42,7 +42,7 @@ func (m *BifrostBackups) BuildEnv(source *dagger.Directory) *dagger.Container {
 		// WithExec([]string{"apt-get", "update"}).
 		// WithExec([]string{"apt-get", "install", "-y", "gcc", "gcc-multilib"}).            // Added gcc and libc-dev
 		WithExec([]string{"apk", "add", "--no-cache", "git", "make", "gcc", "musl-dev"}). // Alpine package names
-		WithEnvVariable("CGO_ENABLED", "1").                                              // Enable CGO
+		WithEnvVariable("CGO_ENABLED", "0").                                              // Enable CGO
 		WithExec([]string{"go", "mod", "tidy"}).
 		WithExec([]string{"go", "mod", "download"}).
 		WithExec([]string{"go", "build", "-o", "bin/bifrost-backups", "."})
@@ -56,10 +56,11 @@ func (m *BifrostBackups) BuildEnv(source *dagger.Directory) *dagger.Container {
 // 		Stdout(ctx)
 // }
 
-func (m *BifrostBackups) Release(ctx context.Context, source *dagger.Directory) (string, error) {
+func (m *BifrostBackups) Release(ctx context.Context, source *dagger.Directory, githubToken *dagger.Secret) (string, error) {
 	// Run gorelaser release to check if the binary compiles in all platforms
 	goreleaser := m.goreleaserContainer(ctx, source).
-		WithExec([]string{"goreleaser", "release", "--snapshot", "--clean"})
+		WithSecretVariable("GITHUB_TOKEN", githubToken).
+		WithExec([]string{"goreleaser", "release", "--clean"})
 
 	// Return any errors from the goreleaser build
 	_, err := goreleaser.Stderr(ctx)
