@@ -9,6 +9,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/klauspost/compress/zstd"
 )
 
 func getBackupKey(client *s3.Client, bucket_name string) (string, error) {
@@ -55,7 +56,7 @@ func getBackupKey(client *s3.Client, bucket_name string) (string, error) {
 	return latestBackupKey, nil
 }
 
-func PullBackup(storage S3Requirements, backup_name string) (*bytes.Buffer, error) {
+func PullBackup(storage S3Requirements, backup_name string, useCompression bool) (*bytes.Buffer, error) {
 	if storage == (S3Requirements{}) {
 		return nil, fmt.Errorf("storage can't be empty")
 	}
@@ -82,8 +83,22 @@ func PullBackup(storage S3Requirements, backup_name string) (*bytes.Buffer, erro
 	}
 	defer obj.Body.Close()
 
-	buf := bytes.NewBuffer(nil)
-	_, err = io.Copy(buf, obj.Body)
+	buf := new(bytes.Buffer)
+	var reader io.Reader = obj.Body
+
+	if useCompression {
+		// Create a new Zstandard decompression reader
+		zReader, err := zstd.NewReader(obj.Body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create new reader object %s from bucket %s: %v", latestBackupKey, storage.BucketName, err)
+		}
+		defer zReader.Close()
+
+		// Use the zstd reader for decompression
+		reader = zReader
+	}
+
+	_, err = io.Copy(buf, reader)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read object %s from bucket %s: %v", latestBackupKey, storage.BucketName, err)
 	}

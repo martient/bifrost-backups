@@ -15,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/smithy-go"
+	"github.com/klauspost/compress/zstd"
 	"github.com/martient/golang-utils/utils"
 )
 
@@ -59,17 +60,17 @@ func createBucket(client *s3.Client, name string, region string) error {
 	return err
 }
 
-func upload(client *s3.Client, bucket_name string, buffer *bytes.Buffer) error {
+func upload(client *s3.Client, bucket_name string, buffer []byte) error {
 	if client == nil {
 		return fmt.Errorf("s3 client can't be null for the upload operation")
 	} else if len(bucket_name) <= 0 {
 		return fmt.Errorf("the bucket need a name, can't be null at the upload")
-	} else if buffer == nil || buffer.Len() <= 0 {
+	} else if buffer == nil || len(buffer) <= 0 {
 		return fmt.Errorf("the buffer can't be nil or empty at the bucket upload")
 	}
 	currentTime := time.Now().UTC()
 
-	largeBuffer := bytes.NewReader(buffer.Bytes())
+	largeBuffer := bytes.NewReader(buffer)
 	var partMiBs int64 = 100
 	uploader := manager.NewUploader(client, func(u *manager.Uploader) {
 		u.PartSize = partMiBs * 1024 * 1024
@@ -100,7 +101,7 @@ func upload(client *s3.Client, bucket_name string, buffer *bytes.Buffer) error {
 	return nil
 }
 
-func StoreBackup(storage S3Requirements, buffer *bytes.Buffer) error {
+func StoreBackup(storage S3Requirements, buffer *bytes.Buffer, useCompression bool) error {
 	if buffer == nil {
 		return fmt.Errorf("buffer can't be empty")
 	} else if storage == (S3Requirements{}) {
@@ -125,13 +126,35 @@ func StoreBackup(storage S3Requirements, buffer *bytes.Buffer) error {
 		}
 	}
 
+	var dataToWrite []byte
+
+	if useCompression {
+		// compressed, err := zstd.Compress(nil, buffer.Bytes())
+		// if err != nil {
+		// 	utils.LogError("Compression failed", "Local storage", err)
+		// 	return err
+		// }
+		encoder, err := zstd.NewWriter(nil)
+		if err != nil {
+			utils.LogError("Compression failed", "S3", err)
+			return err
+		}
+		defer encoder.Close()
+
+		// Compress the input string
+		compressed := encoder.EncodeAll([]byte(buffer.Bytes()), nil)
+		dataToWrite = compressed
+	} else {
+		dataToWrite = buffer.Bytes()
+	}
+
 	if hb != nil {
-		return upload(client, storage.BucketName, buffer)
+		return upload(client, storage.BucketName, dataToWrite)
 	} else {
 		err = createBucket(client, storage.BucketName, storage.Region)
 		if err != nil {
 			return err
 		}
-		return upload(client, storage.BucketName, buffer)
+		return upload(client, storage.BucketName, dataToWrite)
 	}
 }
