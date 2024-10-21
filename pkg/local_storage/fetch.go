@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/DataDog/zstd"
+	"github.com/klauspost/compress/zstd"
 	"github.com/martient/golang-utils/utils"
 )
 
@@ -60,7 +60,10 @@ func PullBackup(storage LocalStorageRequirements, backup_name string, useCompres
 	var reader io.Reader = file
 
 	if useCompression {
-		zReader := zstd.NewReader(file)
+		zReader, err := zstd.NewReader(file)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create new reader for file %s from folder %s: %v", latestBackupKey, storage.FolderPath, err)
+		}
 		defer zReader.Close()
 		reader = zReader
 	}

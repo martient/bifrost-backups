@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/DataDog/zstd"
+	"github.com/klauspost/compress/zstd"
 	"github.com/martient/golang-utils/utils"
 )
 
@@ -43,11 +43,15 @@ func StoreBackup(storage LocalStorageRequirements, buffer *bytes.Buffer, useComp
 	var dataToWrite []byte
 
 	if useCompression {
-		compressed, err := zstd.Compress(nil, buffer.Bytes())
+		encoder, err := zstd.NewWriter(nil)
 		if err != nil {
 			utils.LogError("Compression failed", "Local storage", err)
 			return err
 		}
+		defer encoder.Close()
+
+		// Compress the input string
+		compressed := encoder.EncodeAll([]byte(buffer.Bytes()), nil)
 		dataToWrite = compressed
 	} else {
 		dataToWrite = buffer.Bytes()

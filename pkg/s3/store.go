@@ -8,7 +8,6 @@ import (
 	"log"
 	"time"
 
-	"github.com/DataDog/zstd"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
@@ -16,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/smithy-go"
+	"github.com/klauspost/compress/zstd"
 	"github.com/martient/golang-utils/utils"
 )
 
@@ -129,11 +129,20 @@ func StoreBackup(storage S3Requirements, buffer *bytes.Buffer, useCompression bo
 	var dataToWrite []byte
 
 	if useCompression {
-		compressed, err := zstd.Compress(nil, buffer.Bytes())
+		// compressed, err := zstd.Compress(nil, buffer.Bytes())
+		// if err != nil {
+		// 	utils.LogError("Compression failed", "Local storage", err)
+		// 	return err
+		// }
+		encoder, err := zstd.NewWriter(nil)
 		if err != nil {
-			utils.LogError("Compression failed", "Local storage", err)
+			utils.LogError("Compression failed", "S3", err)
 			return err
 		}
+		defer encoder.Close()
+
+		// Compress the input string
+		compressed := encoder.EncodeAll([]byte(buffer.Bytes()), nil)
 		dataToWrite = compressed
 	} else {
 		dataToWrite = buffer.Bytes()
