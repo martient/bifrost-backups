@@ -1,7 +1,6 @@
 package setup
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -13,6 +12,7 @@ import (
 	"github.com/martient/bifrost-backup/pkg/sqlite3"
 	"github.com/martient/golang-utils/utils"
 	"github.com/pkg/errors"
+	"gopkg.in/yaml.v3"
 )
 
 func InteractiveRegisterDatabase() {
@@ -59,7 +59,7 @@ func init() {
 	if err != nil {
 		panic(fmt.Errorf("error getting home directory: %w", err))
 	}
-	configFilePath = filepath.Join(homeDir, ".config", "bifrost_backups.json")
+	configFilePath = filepath.Join(homeDir, ".config", "bifrost_backups.yaml")
 	loadConfig()
 }
 
@@ -73,7 +73,7 @@ func loadConfig() {
 	}
 	defer file.Close()
 
-	if err := json.NewDecoder(file).Decode(&config); err != nil {
+	if err := yaml.NewDecoder(file).Decode(&config); err != nil {
 		panic(fmt.Errorf("error decoding config file: %w", err))
 	}
 }
@@ -117,7 +117,7 @@ func RegisterDatabase(databaseType DatabaseType, name string, cron string, stora
 	}
 	defer file.Close()
 
-	if err := json.NewEncoder(file).Encode(config); err != nil {
+	if err := yaml.NewEncoder(file).Encode(config); err != nil {
 		return errors.Wrap(err, "error encoding config file")
 	}
 

@@ -1,7 +1,6 @@
 package setup
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 
@@ -12,33 +11,14 @@ import (
 	"github.com/martient/bifrost-backup/pkg/setup/interactives"
 	"github.com/martient/golang-utils/utils"
 	"github.com/pkg/errors"
+	"gopkg.in/yaml.v3"
 )
 
 func InteractiveRegisterStorage() {
-	// homeDir, err := os.UserHomeDir()
-	// if err != nil {
-	// 	fmt.Println("Error getting home directory:", err)
-	// 	return
-	// }
-	// configFilePath := filepath.Join(homeDir, ".config", "bifrost_backups.json")
-
-	// file, err := os.OpenFile(configFilePath, os.O_RDWR|os.O_TRUNC, 0644)
-	// if err != nil {
-	// 	fmt.Println("Error opening config file:", err)
-	// 	return
-	// }
-	// defer file.Close()
-
 	if _, err := tea.NewProgram(interactives.LocalStorageInitialModel()).Run(); err != nil {
 		utils.LogError("Could not start program: %s\n", "Register datbase", err)
 		os.Exit(1)
 	}
-
-	// encoder := json.NewEncoder(file)
-	// if err := encoder.Encode(config); err != nil {
-	// 	fmt.Println("Error encoding JSON:", err)
-	// 	return
-	// }
 }
 
 func RegisterLocalStorage(path string) (*localstorage.LocalStorageRequirements, error) {
@@ -117,7 +97,7 @@ func RegisterStorage(storageType StorageType, name string, retention int, cipher
 	}
 	defer file.Close()
 
-	if err := json.NewEncoder(file).Encode(config); err != nil {
+	if err := yaml.NewEncoder(file).Encode(config); err != nil {
 		return errors.Wrap(err, "error encoding config file")
 	}
 	return nil
