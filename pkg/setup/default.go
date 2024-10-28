@@ -1,13 +1,13 @@
 package setup
 
 import (
-	"encoding/json"
 	"os"
 	"path/filepath"
 
 	"github.com/martient/bifrost-backup/pkg/crypto"
 	localstorage "github.com/martient/bifrost-backup/pkg/local_storage"
 	"github.com/martient/golang-utils/utils"
+	"gopkg.in/yaml.v3"
 )
 
 func generateDefaultConfig(current_version string) {
@@ -35,7 +35,7 @@ func generateDefaultConfig(current_version string) {
 		utils.LogError("Error getting home directory:", "DEFAULT_CONFIG", err)
 		return
 	}
-	configFilePath := filepath.Join(homeDir, ".config", "bifrost_backups.json")
+	configFilePath := filepath.Join(homeDir, ".config", "bifrost_backups.yaml")
 
 	// Create the config file if it doesn't exist
 	if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
@@ -62,9 +62,9 @@ func generateDefaultConfig(current_version string) {
 	}
 	defer file.Close()
 
-	encoder := json.NewEncoder(file)
+	encoder := yaml.NewEncoder(file)
 	if err := encoder.Encode(config); err != nil {
-		utils.LogError("Error encoding JSON", "SETUP", err)
+		utils.LogError("Error encoding YAML", "SETUP", err)
 		return
 	}
 }

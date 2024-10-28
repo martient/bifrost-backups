@@ -22,26 +22,26 @@ const (
 )
 
 type Storage struct {
-	Type          StorageType                           `json:"storage_type"`
-	Name          string                                `json:"name"`
-	CipherKey     string                                `json:"cypher_key"`
-	RetentionDays int                                   `json:"retention_days" default:"21"`
-	Compression   bool                                  `json:"compression" default:"true"`
-	LocalStorage  localstorage.LocalStorageRequirements `json:"local_storage"`
-	S3            s3.S3Requirements                     `json:"s3"`
+	Type          StorageType                           `yaml:"storage_type"`
+	Name          string                                `yaml:"name"`
+	CipherKey     string                                `yaml:"cypher_key"`
+	RetentionDays int                                   `yaml:"retention_days" default:"21"`
+	Compression   bool                                  `yaml:"compression" default:"true"`
+	LocalStorage  localstorage.LocalStorageRequirements `yaml:"local_storage,omitempty"` // Make local_storage optional
+	S3            s3.S3Requirements                     `yaml:"s3,omitempty"`            // Make s3 optional
 }
 
 type Database struct {
-	Type       DatabaseType                      `json:"database_type"`
-	Name       string                            `json:"name"`
-	Postgresql postgresql.PostgresqlRequirements `json:"postgresql"`
-	Sqlite3    sqlite3.Sqlite3Requirements       `json:"sqlite3"`
-	Storages   []string                          `json:"storages"`
-	Cron       string                            `json:"cron"`
+	Type       DatabaseType                      `yaml:"database_type"`
+	Name       string                            `yaml:"name"`
+	Postgresql postgresql.PostgresqlRequirements `yaml:"postgresql,omitempty"`
+	Sqlite3    sqlite3.Sqlite3Requirements       `yaml:"sqlite3,omitempty"`
+	Storages   []string                          `yaml:"storages"`
+	Cron       string                            `yaml:"cron"`
 }
 
 type Config struct {
-	Version   string     `json:"version"`
-	Databases []Database `json:"databases"`
-	Storages  []Storage  `json:"storages"`
+	Version   string     `yaml:"version"`
+	Databases []Database `yaml:"databases,omitempty"`
+	Storages  []Storage  `yaml:"storages,omitempty"`
 }

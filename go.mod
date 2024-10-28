@@ -2,8 +2,6 @@ module github.com/martient/bifrost-backup
 
 go 1.23.0
 
-toolchain go1.23.0
-
 require (
 	github.com/aws/smithy-go v1.22.0
 	github.com/blang/semver v3.5.1+incompatible
@@ -85,5 +83,5 @@ require (
 	golang.org/x/sys v0.24.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
+	gopkg.in/yaml.v3 v3.0.1
 )

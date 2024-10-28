@@ -1,10 +1,12 @@
 package setup
 
 import (
-	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
+
+	"gopkg.in/yaml.v3"
 )
 
 func readConfig() (Config, error) {
@@ -13,7 +15,7 @@ func readConfig() (Config, error) {
 		return Config{}, err
 	}
 
-	configFilePath := filepath.Join(homeDir, ".config", "bifrost_backups.json")
+	configFilePath := filepath.Join(homeDir, ".config", "bifrost_backups.yaml")
 
 	file, err := os.OpenFile(configFilePath, os.O_RDONLY, 0644)
 	if err != nil {
@@ -22,8 +24,11 @@ func readConfig() (Config, error) {
 	defer file.Close()
 
 	config := Config{}
-
-	err = json.NewDecoder(file).Decode(&config)
+	data, err := io.ReadAll(file)
+	if err != nil {
+		return Config{}, fmt.Errorf("error reading config file: %v", err)
+	}
+	err = yaml.Unmarshal(data, &config)
 	if err != nil {
 		return Config{}, err
 	}
