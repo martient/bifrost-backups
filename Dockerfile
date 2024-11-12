@@ -10,6 +10,8 @@ FROM alpine:latest
 
 WORKDIR /app
 
+RUN apk add --no-cache postgresql-client
+
 COPY --from=builder /app/bifrost-backups .
 
 ENTRYPOINT ["/bin/ash"]
