@@ -12,4 +12,4 @@ WORKDIR /app
 
 COPY --from=builder /app/bifrost-backups .
 
-CMD ["/app/bifrost-backups"]
+ENTRYPOINT ["/app/bifrost-backups"]
