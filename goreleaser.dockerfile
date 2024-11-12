@@ -1,7 +1,7 @@
 FROM alpine:latest
 
-# RUN /bin/ash -c apk add --no-cache postgresql-client
-RUN /bin/ash -c "apk add --no-cache postgresql-client"
+SHELL ["/bin/ash", "-c"]
+RUN apk add --no-cache postgresql-client
 
 
 COPY bifrost-backups /bifrost-backups
