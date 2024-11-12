@@ -1,7 +1,7 @@
-FROM ghcr.io/linuxserver/ubuntu:latest
+FROM alpine:latest
 
-SHELL ["/bin/sh", "-c"]
-RUN apt update -y && apt upgrade -y && apt install postgresql-client -y
+SHELL ["/bin/ash", "-c"]
+RUN apk add --no-cache postgresql-client
 
 COPY bifrost-backups /bifrost-backups
 ENTRYPOINT ["/bifrost-backups"]
