@@ -1,4 +1,4 @@
-FROM ubuntu:latest
+FROM ghcr.io/linuxserver/ubuntu:latest
 
 SHELL ["/bin/sh", "-c"]
 RUN apt update -y && apt upgrade -y && apt install postgresql-client -y
