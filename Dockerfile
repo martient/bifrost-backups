@@ -10,7 +10,7 @@ FROM alpine:latest
 
 WORKDIR /app
 
-RUN apk add --no-cache postgresql-client
+RUN /bin/ash -c apk add --no-cache postgresql-client
 
 COPY --from=builder /app/bifrost-backups .
 
