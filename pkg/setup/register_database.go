@@ -3,20 +3,15 @@ package setup
 import (
 	"fmt"
 	"os"
-	"path/filepath"
-	"sync"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/martient/bifrost-backup/pkg/postgresql"
 	"github.com/martient/bifrost-backup/pkg/setup/interactives"
 	"github.com/martient/bifrost-backup/pkg/sqlite3"
 	"github.com/martient/golang-utils/utils"
-	"github.com/pkg/errors"
-	"gopkg.in/yaml.v3"
 )
 
 func InteractiveRegisterDatabase() {
-
 	if _, err := tea.NewProgram(interactives.PostgresqlInitialModel()).Run(); err != nil {
 		utils.LogError("Could not start program: %s\n", "Register datbase", err)
 		os.Exit(1)
@@ -46,41 +41,16 @@ func RegisterSqlite3Database(path string) (*sqlite3.Sqlite3Requirements, error) 
 	return requirements, nil
 }
 
-var (
-	configFilePath string
-	config         Config
-	configMutex    sync.RWMutex
-	version        = "1.0"
-)
-
-func init() {
-	generateDefaultConfig(version)
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		panic(fmt.Errorf("error getting home directory: %w", err))
-	}
-	configFilePath = filepath.Join(homeDir, ".config", "bifrost_backups.yaml")
-	loadConfig()
-}
-
-func loadConfig() {
-	configMutex.Lock()
-	defer configMutex.Unlock()
-
-	file, err := os.OpenFile(configFilePath, os.O_RDWR|os.O_CREATE, 0644)
-	if err != nil {
-		panic(fmt.Errorf("error opening config file: %w", err))
-	}
-	defer file.Close()
-
-	if err := yaml.NewDecoder(file).Decode(&config); err != nil {
-		panic(fmt.Errorf("error decoding config file: %w", err))
-	}
-}
-
 func RegisterDatabase(databaseType DatabaseType, name string, cron string, storages []string, requirements interface{}) error {
+	// Lock during the entire operation to prevent race conditions
 	configMutex.Lock()
 	defer configMutex.Unlock()
+
+	// Read the current config
+	currentConfig, err := readConfig()
+	if err != nil {
+		return fmt.Errorf("failed to read config: %w", err)
+	}
 
 	newDatabase := &Database{
 		Type:     databaseType,
@@ -98,27 +68,25 @@ func RegisterDatabase(databaseType DatabaseType, name string, cron string, stora
 		return fmt.Errorf("unsupported database type: %T", requirements)
 	}
 
-	alreadyExist := false
-	for i, ite := range config.Databases {
-		if ite.Name == newDatabase.Name {
-			config.Databases[i] = *newDatabase
-			alreadyExist = true
-			utils.LogInfo("Database %s already register, it as been updated", "REGISTER DATABASE", ite.Name)
+	// Find and update existing database, or append new one
+	found := false
+	for i := range currentConfig.Databases {
+		if currentConfig.Databases[i].Name == name {
+			currentConfig.Databases[i] = *newDatabase
+			found = true
+			utils.LogInfo("Database %s configuration updated", "REGISTER DATABASE", name)
 			break
 		}
 	}
-	if !alreadyExist {
-		config.Databases = append(config.Databases, *newDatabase)
+
+	if !found {
+		currentConfig.Databases = append(currentConfig.Databases, *newDatabase)
+		utils.LogInfo("Database %s registered", "REGISTER DATABASE", name)
 	}
 
-	file, err := os.OpenFile(configFilePath, os.O_RDWR|os.O_TRUNC, 0644)
-	if err != nil {
-		return errors.Wrap(err, "error opening config file")
-	}
-	defer file.Close()
-
-	if err := yaml.NewEncoder(file).Encode(config); err != nil {
-		return errors.Wrap(err, "error encoding config file")
+	// Write the updated config back
+	if err := writeConfig(currentConfig); err != nil {
+		return fmt.Errorf("failed to write config: %w", err)
 	}
 
 	return nil

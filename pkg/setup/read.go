@@ -5,19 +5,29 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"gopkg.in/yaml.v3"
 )
 
-func readConfig() (Config, error) {
+var (
+	configFilePath string
+	config         Config
+	configMutex    = &sync.Mutex{}
+	noEncryption   bool
+	version        = "1.0"
+)
+
+func init() {
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		return Config{}, err
+		panic(fmt.Sprintf("failed to get home directory: %v", err))
 	}
+	configFilePath = filepath.Join(homeDir, ".config", "bifrost_backups.yaml")
+}
 
-	configFilePath := filepath.Join(homeDir, ".config", "bifrost_backups.yaml")
-
-	file, err := os.OpenFile(configFilePath, os.O_RDONLY, 0644)
+func readConfig() (Config, error) {
+	file, err := os.OpenFile(configFilePath, os.O_RDONLY, 0600)
 	if err != nil {
 		return Config{}, fmt.Errorf("error opening config file: %v", err)
 	}
@@ -32,7 +42,69 @@ func readConfig() (Config, error) {
 	if err != nil {
 		return Config{}, err
 	}
+
+	// Initialize secure manager and decrypt sensitive fields if encryption is enabled
+	secureManager, err := NewSecureManager(noEncryption)
+	if err != nil {
+		return Config{}, fmt.Errorf("failed to initialize secure manager: %w", err)
+	}
+
+	err = secureManager.DecryptConfig(&config)
+	if err != nil {
+		return Config{}, fmt.Errorf("failed to decrypt config: %w", err)
+	}
+
 	return config, nil
+}
+
+func writeConfig(config Config) error {
+	// Initialize secure manager and encrypt sensitive fields if encryption is enabled
+	secureManager, err := NewSecureManager(noEncryption)
+	if err != nil {
+		return fmt.Errorf("failed to initialize secure manager: %w", err)
+	}
+
+	// Create a copy of the config to avoid modifying the original
+	configCopy := config
+	err = secureManager.SecureConfig(&configCopy)
+	if err != nil {
+		return fmt.Errorf("failed to encrypt config: %w", err)
+	}
+
+	// Create config directory if it doesn't exist
+	configDir := filepath.Dir(configFilePath)
+	if err := os.MkdirAll(configDir, 0700); err != nil {
+		return fmt.Errorf("failed to create config directory: %w", err)
+	}
+
+	// Write the config to a temporary file first
+	tempFile, err := os.CreateTemp(configDir, "bifrost_backups.*.yaml")
+	if err != nil {
+		return fmt.Errorf("failed to create temp config file: %w", err)
+	}
+	tempFilePath := tempFile.Name()
+
+	// Ensure temp file has secure permissions
+	if err := os.Chmod(tempFilePath, 0600); err != nil {
+		os.Remove(tempFilePath)
+		return fmt.Errorf("failed to set temp file permissions: %w", err)
+	}
+
+	// Write config to temp file
+	encoder := yaml.NewEncoder(tempFile)
+	if err := encoder.Encode(configCopy); err != nil {
+		os.Remove(tempFilePath)
+		return fmt.Errorf("failed to encode config: %w", err)
+	}
+	tempFile.Close()
+
+	// Atomically replace the old config file
+	if err := os.Rename(tempFilePath, configFilePath); err != nil {
+		os.Remove(tempFilePath)
+		return fmt.Errorf("failed to save config file: %w", err)
+	}
+
+	return nil
 }
 
 func GetDatabaseConfigName() ([]string, error) {

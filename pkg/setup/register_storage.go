@@ -11,7 +11,6 @@ import (
 	"github.com/martient/bifrost-backup/pkg/setup/interactives"
 	"github.com/martient/golang-utils/utils"
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v3"
 )
 
 func InteractiveRegisterStorage() {
@@ -52,8 +51,13 @@ func RegisterStorage(storageType StorageType, name string, retention int, cipher
 	configMutex.Lock()
 	defer configMutex.Unlock()
 
-	var err error
+	// Read current config
+	currentConfig, err := readConfig()
+	if err != nil {
+		return fmt.Errorf("failed to read config: %w", err)
+	}
 
+	// Generate cipher key if not provided
 	if cipher_key == "" {
 		cipher_key, err = crypto.GenerateCipherKey(32)
 		if err != nil {
@@ -69,36 +73,35 @@ func RegisterStorage(storageType StorageType, name string, retention int, cipher
 		Compression:   compression,
 	}
 
-	switch db := storage.(type) {
+	switch req := storage.(type) {
 	case *localstorage.LocalStorageRequirements:
-		newStorage.LocalStorage = *db
+		newStorage.LocalStorage = *req
 	case *s3.S3Requirements:
-		newStorage.S3 = *db
+		newStorage.S3 = *req
 	default:
 		return fmt.Errorf("unsupported storage type")
 	}
 
-	alreadyExist := false
-	for i, ite := range config.Storages {
-		if ite.Name == newStorage.Name {
-			config.Storages[i] = *newStorage
-			alreadyExist = true
-			utils.LogInfo("Storage %s already register, it as been updated", "REGISTER STORAGE", ite.Name)
+	// Find and update existing storage, or append new one
+	found := false
+	for i := range currentConfig.Storages {
+		if currentConfig.Storages[i].Name == name {
+			currentConfig.Storages[i] = *newStorage
+			found = true
+			utils.LogInfo("Storage %s configuration updated", "REGISTER STORAGE", name)
 			break
 		}
 	}
-	if !alreadyExist {
-		config.Storages = append(config.Storages, *newStorage)
+
+	if !found {
+		currentConfig.Storages = append(currentConfig.Storages, *newStorage)
+		utils.LogInfo("Storage %s registered", "REGISTER STORAGE", name)
 	}
 
-	file, err := os.OpenFile(configFilePath, os.O_RDWR|os.O_TRUNC, 0644)
-	if err != nil {
-		return errors.Wrap(err, "error opening config file")
+	// Write the updated config back using the secure system
+	if err := writeConfig(currentConfig); err != nil {
+		return fmt.Errorf("failed to write config: %w", err)
 	}
-	defer file.Close()
 
-	if err := yaml.NewEncoder(file).Encode(config); err != nil {
-		return errors.Wrap(err, "error encoding config file")
-	}
 	return nil
 }
