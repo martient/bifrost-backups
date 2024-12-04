@@ -6,8 +6,11 @@ import (
 	"github.com/spf13/viper"
 )
 
-var jsonConfigFile string
-var BEMversion string
+var (
+	jsonConfigFile string
+	BEMversion    string
+	noEncryption  bool
+)
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -45,6 +48,7 @@ func init() {
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 	rootCmd.PersistentFlags().BoolP("yes", "y", false, "Auto accept manual question y/n")
 	rootCmd.PersistentFlags().BoolP("disable-update-check", "", false, "Disable auto update checking before execution")
+	rootCmd.PersistentFlags().BoolVar(&noEncryption, "no-encryption", false, "Disable configuration encryption (not recommended for production)")
 }
 
 func initConfig() {

@@ -12,15 +12,14 @@
             "program": "${workspaceFolder}/main.go",
             "args": [
                 "register-database",
-                "--no-interactive",
                 "--type",
                 "1",
                 "--name",
                 "dev",
                 "--user",
-                "dev",
+                "devv",
                 "--password",
-                "abigpassword",
+                "pass",
                 "--disable-update-check"
             ]
         },
@@ -32,7 +31,6 @@
             "program": "${workspaceFolder}/main.go",
             "args": [
                 "register-storage",
-                "--no-interactive",
                 "--type",
                 "2",
                 "--name",
@@ -44,7 +42,7 @@
                 "--access-key-id",
                 "sdsda",
                 "--access-key-secret",
-                "sdsdsdad",
+                "sdsdsdade",
                 "--endpoint",
                 "dsd",
                 "--disable-update-check"
@@ -58,9 +56,7 @@
             "program": "${workspaceFolder}/main.go",
             "args": [
                 "backup",
-                "--disable-update-check",
-                "--name",
-                "dev",
+                "--disable-update-check"
             ]
         },
         {

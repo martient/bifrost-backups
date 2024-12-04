@@ -29,15 +29,25 @@ func RunBackup(database PostgresqlRequirements) (*bytes.Buffer, error) {
 		cmd.Env = append(cmd.Env, "PGPASSWORD="+database.Password)
 	}
 
-	var buffer bytes.Buffer
-	cmd.Stdout = &buffer
+	var stdout, stderr bytes.Buffer
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
 
 	err = cmd.Run()
 	if err != nil {
-		utils.LogError("Failed to backup database '%s'", "POSTGRESQL", err)
-		return nil, fmt.Errorf("backup failed: %w", err)
+		errMsg := stderr.String()
+		if errMsg != "" {
+			utils.LogErrorInterface("pg_dump error: %s", "POSTGRESQL", err, errMsg)
+		}
+		utils.LogErrorInterface("Failed to backup database '%s': %v", "POSTGRESQL", err, database.Name)
+		return nil, fmt.Errorf("backup failed: %v: %s", err, errMsg)
 	}
-	return &buffer, nil
+
+	if stdout.Len() == 0 {
+		return nil, fmt.Errorf("backup produced no output, this may indicate a connection issue")
+	}
+
+	return &stdout, nil
 }
 
 func validateRequirements(database PostgresqlRequirements) error {
@@ -45,7 +55,23 @@ func validateRequirements(database PostgresqlRequirements) error {
 		return fmt.Errorf("database requirements cannot be empty")
 	}
 
-	// Add additional validation checks for port, hostname, etc.
+	if database.Name == "" {
+		return fmt.Errorf("database name cannot be empty")
+	}
+
+	if database.User == "" {
+		return fmt.Errorf("database user cannot be empty")
+	}
+
+	// Default hostname to localhost if not specified
+	if database.Hostname == "" {
+		database.Hostname = "127.0.0.1"
+	}
+
+	// Default port to 5432 if not specified
+	if database.Port == "" {
+		database.Port = "5432"
+	}
 
 	return nil
 }
@@ -53,19 +79,18 @@ func validateRequirements(database PostgresqlRequirements) error {
 func buildCommandArgsBackup(database PostgresqlRequirements) []string {
 	var args []string
 
-	if database.Hostname != "" {
-		args = append(args, "-h", database.Hostname)
-	}
+	// Always specify host and port for consistency
+	args = append(args, "-h", database.Hostname)
+	args = append(args, "-p", database.Port)
+	args = append(args, "-U", database.User)
 
-	if database.Port != "" {
-		args = append(args, "-p", database.Port)
-	}
-
-	if database.User != "" {
-		args = append(args, "-U", database.User)
-	}
-
+	// Use tar format for better compatibility
 	args = append(args, "-F", "t")
+
+	// Add verbose flag for better error reporting
+	args = append(args, "-v")
+
+	// Database name should be last
 	args = append(args, database.Name)
 
 	return args
