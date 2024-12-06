@@ -118,10 +118,10 @@ jobs:
             artifact_name: bifrost-backup-darwin-amd64
             GOOS: darwin
             GOARCH: amd64
-          - os: windows-latest
-            artifact_name: bifrost-backup-windows-amd64.exe
-            GOOS: windows
-            GOARCH: amd64
+          # - os: windows-latest
+          #   artifact_name: bifrost-backup-windows-amd64.exe
+          #   GOOS: windows
+          #   GOARCH: amd64
     runs-on: ${{ matrix.os }}
     
     steps:
