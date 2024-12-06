@@ -9,6 +9,7 @@ import (
 	"github.com/martient/bifrost-backup/pkg/setup/interactives"
 	"github.com/martient/bifrost-backup/pkg/sqlite3"
 	"github.com/martient/golang-utils/utils"
+	"github.com/robfig/cron/v3"
 )
 
 func InteractiveRegisterDatabase() {
@@ -41,7 +42,23 @@ func RegisterSqlite3Database(path string) (*sqlite3.Sqlite3Requirements, error) 
 	return requirements, nil
 }
 
-func RegisterDatabase(databaseType DatabaseType, name string, cron string, storages []string, requirements interface{}) error {
+func RegisterDatabase(databaseType DatabaseType, name string, cronExpr string, storages []string, requirements interface{}) error {
+	// Validate inputs
+	if name == "" {
+		return fmt.Errorf("database name cannot be empty")
+	}
+
+	if requirements == nil {
+		return fmt.Errorf("database requirements cannot be nil")
+	}
+
+	// Validate cron expression
+	parser := cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
+	_, err := parser.Parse(cronExpr)
+	if err != nil {
+		return fmt.Errorf("invalid cron expression: %w", err)
+	}
+
 	// Lock during the entire operation to prevent race conditions
 	configMutex.Lock()
 	defer configMutex.Unlock()
@@ -55,14 +72,20 @@ func RegisterDatabase(databaseType DatabaseType, name string, cron string, stora
 	newDatabase := &Database{
 		Type:     databaseType,
 		Name:     name,
-		Cron:     cron,
+		Cron:     cronExpr,
 		Storages: storages,
 	}
 
 	switch req := requirements.(type) {
 	case *postgresql.PostgresqlRequirements:
+		if req.User == "" || req.Name == "" {
+			return fmt.Errorf("PostgreSQL database user and name cannot be empty")
+		}
 		newDatabase.Postgresql = *req
 	case *sqlite3.Sqlite3Requirements:
+		if req.Path == "" {
+			return fmt.Errorf("SQLite3 database path cannot be empty")
+		}
 		newDatabase.Sqlite3 = *req
 	default:
 		return fmt.Errorf("unsupported database type: %T", requirements)

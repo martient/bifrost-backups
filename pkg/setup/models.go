@@ -22,13 +22,14 @@ const (
 )
 
 type Storage struct {
-	Type          StorageType                           `yaml:"storage_type"`
-	Name          string                                `yaml:"name"`
-	CipherKey     string                                `yaml:"cypher_key"`
-	RetentionDays int                                   `yaml:"retention_days" default:"21"`
-	Compression   bool                                  `yaml:"compression" default:"true"`
-	LocalStorage  localstorage.LocalStorageRequirements `yaml:"local_storage,omitempty"` // Make local_storage optional
-	S3            s3.S3Requirements                     `yaml:"s3,omitempty"`            // Make s3 optional
+	Type                   StorageType                           `yaml:"storage_type"`
+	Name                   string                                `yaml:"name"`
+	CipherKey              string                                `yaml:"cypher_key"`
+	RetentionDays          int                                   `yaml:"retention_days" default:"21"`
+	ExecuteRetentionPolicy bool                                  `yaml:"execute_retention_policy" default:"true"`
+	Compression            bool                                  `yaml:"compression" default:"true"`
+	LocalStorage           localstorage.LocalStorageRequirements `yaml:"local_storage,omitempty"` // Make local_storage optional
+	S3                     s3.S3Requirements                     `yaml:"s3,omitempty"`            // Make s3 optional
 }
 
 type Database struct {

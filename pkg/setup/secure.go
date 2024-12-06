@@ -4,9 +4,11 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
 	"io"
+	"os"
 	"os/user"
 	"strings"
 
@@ -16,7 +18,6 @@ import (
 
 const (
 	keyringService = "bifrost-backups"
-	keyringKey     = "master-key"
 )
 
 type SecureManager struct {
@@ -59,13 +60,33 @@ func NewSecureManager(noEncryption bool) (*SecureManager, error) {
 	return &SecureManager{masterKey: masterKey, noEncryption: false}, nil
 }
 
-// encrypt encrypts a string using AES-256-GCM
+// deriveHostKey derives a host-specific key using the master key and host information
+func (sm *SecureManager) deriveHostKey() ([]byte, error) {
+	hostname, err := os.Hostname()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get hostname: %w", err)
+	}
+
+	// Create a unique host identifier by combining hostname with master key
+	h := sha256.New()
+	h.Write([]byte(hostname))
+	h.Write(sm.masterKey)
+
+	return h.Sum(nil), nil
+}
+
+// encrypt encrypts a string using AES-256-GCM with host-specific key
 func (sm *SecureManager) encrypt(plaintext string) (string, error) {
 	if plaintext == "" || sm.noEncryption {
 		return plaintext, nil
 	}
 
-	block, err := aes.NewCipher(sm.masterKey)
+	hostKey, err := sm.deriveHostKey()
+	if err != nil {
+		return "", fmt.Errorf("failed to derive host key: %w", err)
+	}
+
+	block, err := aes.NewCipher(hostKey)
 	if err != nil {
 		return "", err
 	}
@@ -84,7 +105,7 @@ func (sm *SecureManager) encrypt(plaintext string) (string, error) {
 	return base64.StdEncoding.EncodeToString(ciphertext), nil
 }
 
-// decrypt decrypts a string using AES-256-GCM
+// decrypt decrypts a string using AES-256-GCM with host-specific key
 func (sm *SecureManager) decrypt(ciphertext string) (string, error) {
 	if ciphertext == "" || sm.noEncryption {
 		return ciphertext, nil
@@ -104,7 +125,12 @@ func (sm *SecureManager) decrypt(ciphertext string) (string, error) {
 		return ciphertext, nil // Return original if not base64
 	}
 
-	block, err := aes.NewCipher(sm.masterKey)
+	hostKey, err := sm.deriveHostKey()
+	if err != nil {
+		return "", fmt.Errorf("failed to derive host key: %w", err)
+	}
+
+	block, err := aes.NewCipher(hostKey)
 	if err != nil {
 		return "", err
 	}
@@ -120,7 +146,7 @@ func (sm *SecureManager) decrypt(ciphertext string) (string, error) {
 	}
 
 	nonce, ciphertextBytes := data[:nonceSize], data[nonceSize:]
-	plaintext, err := aesGCM.Open(nil, nonce, ciphertextBytes, nil)
+	plaintext, err := aesGCM.Open(nil, nonce, ciphertextBytes, nil) //#nosec
 	if err != nil {
 		return ciphertext, nil // Return original if decryption fails
 	}

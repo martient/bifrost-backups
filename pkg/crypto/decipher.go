@@ -24,7 +24,7 @@ func Decipher(key []byte, cipher_text []byte) (*bytes.Buffer, error) {
 	}
 
 	nonce, cipher_text := cipher_text[:nonceSize], cipher_text[nonceSize:]
-	plaintext, err := aesGCM.Open(nil, nonce, cipher_text, nil)
+	plaintext, err := aesGCM.Open(nil, nonce, cipher_text, nil) //#nosec
 	if err != nil {
 		return nil, err
 	}

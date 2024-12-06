@@ -12,13 +12,19 @@ import (
 
 var (
 	configFilePath string
-	config         Config
 	configMutex    = &sync.Mutex{}
 	noEncryption   bool
 	version        = "1.0"
 )
 
 func init() {
+	// First check if BIFROST_CONFIG environment variable is set
+	if envPath := os.Getenv("BIFROST_CONFIG"); envPath != "" {
+		configFilePath = envPath
+		return
+	}
+
+	// Fall back to default path in home directory
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
 		panic(fmt.Sprintf("failed to get home directory: %v", err))
@@ -27,7 +33,7 @@ func init() {
 }
 
 func readConfig() (Config, error) {
-	file, err := os.OpenFile(configFilePath, os.O_RDONLY, 0600)
+	file, err := os.OpenFile(configFilePath, os.O_RDONLY, 0600) //#nosec
 	if err != nil {
 		return Config{}, fmt.Errorf("error opening config file: %v", err)
 	}
@@ -86,21 +92,32 @@ func writeConfig(config Config) error {
 
 	// Ensure temp file has secure permissions
 	if err := os.Chmod(tempFilePath, 0600); err != nil {
-		os.Remove(tempFilePath)
+		if removeErr := os.Remove(tempFilePath); removeErr != nil {
+			return fmt.Errorf("failed to set temp file permissions and cleanup failed: %v, %v", err, removeErr)
+		}
 		return fmt.Errorf("failed to set temp file permissions: %w", err)
 	}
 
 	// Write config to temp file
 	encoder := yaml.NewEncoder(tempFile)
 	if err := encoder.Encode(configCopy); err != nil {
-		os.Remove(tempFilePath)
+		if removeErr := os.Remove(tempFilePath); removeErr != nil {
+			return fmt.Errorf("failed to encode config and cleanup failed: %v, %v", err, removeErr)
+		}
 		return fmt.Errorf("failed to encode config: %w", err)
 	}
-	tempFile.Close()
+	if err := tempFile.Close(); err != nil {
+		if removeErr := os.Remove(tempFilePath); removeErr != nil {
+			return fmt.Errorf("failed to close temp file and cleanup failed: %v, %v", err, removeErr)
+		}
+		return fmt.Errorf("failed to close temp file: %w", err)
+	}
 
 	// Atomically replace the old config file
 	if err := os.Rename(tempFilePath, configFilePath); err != nil {
-		os.Remove(tempFilePath)
+		if removeErr := os.Remove(tempFilePath); removeErr != nil {
+			return fmt.Errorf("failed to save config file and cleanup failed: %v, %v", err, removeErr)
+		}
 		return fmt.Errorf("failed to save config file: %w", err)
 	}
 
@@ -134,6 +151,21 @@ func ReadDatabaseConfig(name string) (Database, error) {
 		}
 	}
 	return Database{}, fmt.Errorf("database with name %q not found", name)
+}
+
+func GetStorageConfigName() ([]string, error) {
+	config, err := readConfig()
+	var names []string
+
+	if err != nil {
+		return nil, err
+	}
+	for i := 0; i < len(config.Storages); i++ {
+		if config.Storages[i].Name != "" {
+			names = append(names, config.Storages[i].Name)
+		}
+	}
+	return names, nil
 }
 
 func ReadStorageConfig(name string) (Storage, error) {

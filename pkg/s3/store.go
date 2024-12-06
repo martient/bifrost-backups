@@ -20,25 +20,34 @@ import (
 )
 
 func getS3Client(storage S3Requirements) (*s3.Client, error) {
-	var resolver aws.EndpointResolverWithOptions = nil
-	if len(storage.Endpoint) <= 0 {
-		resolver = aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
-			return aws.Endpoint{
-				URL: storage.Endpoint,
-			}, nil
-		})
+	options := []func(*config.LoadOptions) error{
+		// Add credentials provider
+		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
+			storage.AccessKeyId,
+			storage.AccessKeySecret,
+			"",
+		)),
+		config.WithRegion(storage.Region),
 	}
 
-	cfg, err := config.LoadDefaultConfig(context.TODO(),
-		config.WithEndpointResolverWithOptions(resolver),
-		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(storage.AccessKeyId, storage.AccessKeySecret, "")),
-		config.WithRegion(storage.Region),
-	)
+	// Load the configuration
+	cfg, err := config.LoadDefaultConfig(context.TODO(), options...)
 	if err != nil {
 		return nil, err
 	}
 
-	return s3.NewFromConfig(cfg), nil
+	// Create S3 client options
+	s3Options := []func(*s3.Options){}
+
+	// Add custom endpoint if specified
+	if storage.Endpoint != "" {
+		s3Options = append(s3Options, func(o *s3.Options) {
+			o.BaseEndpoint = aws.String(storage.Endpoint)
+		})
+	}
+
+	// Create and return the S3 client with custom options
+	return s3.NewFromConfig(cfg, s3Options...), nil
 }
 
 func createBucket(client *s3.Client, name string, region string) error {

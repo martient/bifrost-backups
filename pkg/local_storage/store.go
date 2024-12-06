@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/klauspost/compress/zstd"
+	internalutils "github.com/martient/bifrost-backup/pkg/utils"
 	"github.com/martient/golang-utils/utils"
 )
 
@@ -19,7 +20,7 @@ func StoreBackup(storage LocalStorageRequirements, buffer *bytes.Buffer, useComp
 	}
 
 	if _, err := os.Stat(storage.FolderPath); os.IsNotExist(err) {
-		err = os.MkdirAll(storage.FolderPath, 0755)
+		err = os.MkdirAll(storage.FolderPath, 0750)
 		if err != nil {
 			utils.LogError("Folder creation went wrong", "Local storage", err)
 			return err
@@ -34,7 +35,14 @@ func StoreBackup(storage LocalStorageRequirements, buffer *bytes.Buffer, useComp
 		currentTime.Hour(),
 		currentTime.Minute(),
 		currentTime.Second()))
-	file, err := os.OpenFile(backupPath, os.O_CREATE|os.O_WRONLY, 0644)
+
+	// Validate backup path
+	allowedPaths := []string{storage.FolderPath}
+	if err := internalutils.ValidatePath(backupPath, allowedPaths); err != nil {
+		return fmt.Errorf("invalid backup path: %w", err)
+	}
+
+	file, err := os.OpenFile(backupPath, os.O_CREATE|os.O_WRONLY, 0600) //#nosec
 	if err != nil {
 		return err
 	}
