@@ -48,6 +48,7 @@ func ExecuteRetentionPolicy(storage S3Requirements, retention_days int) error {
 	if storage == (S3Requirements{}) {
 		return fmt.Errorf("storage can't be empty")
 	}
+
 	client, err := getS3Client(storage)
 	if err != nil {
 		return err

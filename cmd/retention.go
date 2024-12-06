@@ -49,6 +49,10 @@ var retentionCmd = &cobra.Command{
 					utils.LogError("Something went wrong during the config reading: %s", "CLI", err)
 					return
 				}
+				if !storage.ExecuteRetentionPolicy {
+					utils.LogInfo("Rentention policy of %s as been skipped for %s", "CLI", database.Name, storage.Name)
+					continue
+				}
 				switch storage.Type {
 				case setup.LocalStorage:
 					err = localstorage.ExecuteRetentionPolicy(storage.LocalStorage, storage.RetentionDays)

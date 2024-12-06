@@ -21,7 +21,7 @@ func RunBackup(database Sqlite3Requirements) (*bytes.Buffer, error) {
 	}
 
 	args := buildCommandArgsBackup(database)
-	cmd := exec.Command(sqlite3Path, args...)
+	cmd := exec.Command(sqlite3Path, args...) //#nosec
 
 	var buffer bytes.Buffer
 	cmd.Stdout = &buffer

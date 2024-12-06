@@ -37,7 +37,7 @@ func deleteOldBackups(folderPath string, retentionDays int) error {
 	cutoffTime := time.Now().AddDate(0, 0, -retentionDays)
 
 	for _, fileName := range backupFiles {
-		backupTime, err := time.Parse("2006-01-02T15:04:05Z", fileName)
+		backupTime, err := time.Parse("2006-01-02T15:04:005Z", fileName)
 		if err != nil {
 			// Skip files that don't match the expected date format
 			utils.LogError("Failed to parse backup file %s: %v", fileName, err)

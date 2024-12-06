@@ -7,9 +7,8 @@ import (
 )
 
 var (
-	jsonConfigFile string
-	BEMversion    string
-	noEncryption  bool
+	BEMversion   string
+	noEncryption bool
 )
 
 // rootCmd represents the base command when called without any subcommands

@@ -5,9 +5,22 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 
+	internalutils "github.com/martient/bifrost-backup/pkg/utils"
 	"github.com/martient/golang-utils/utils"
 )
+
+var allowedSqliteCommands = map[string][]string{
+	"sqlite3": {
+		"-c",
+		"DROP TABLE IF EXISTS",
+		".dump",
+		".exit",
+		"-d",
+		"--database",
+	},
+}
 
 func RunRestoration(database Sqlite3Requirements, backup *bytes.Buffer) error {
 	if backup.Len() <= 0 {
@@ -16,22 +29,29 @@ func RunRestoration(database Sqlite3Requirements, backup *bytes.Buffer) error {
 		return err
 	}
 
-	sqlite3Path, err := exec.LookPath(sqlite3Command)
+	sqlite3Path, err := exec.LookPath("sqlite3")
 	if err != nil {
 		return fmt.Errorf("sqlite3 command not found: %w", err)
 	}
 
-	args := buildCommandArgsClear(database)
-	cmdClear := exec.Command(sqlite3Path, args...)
+	// Validate database path
+	dbDir := filepath.Dir(database.Path)
+	if err := internalutils.ValidatePath(database.Path, []string{dbDir}); err != nil {
+		return fmt.Errorf("invalid database path: %w", err)
+	}
 
-	args = buildCommandArgsRestore(database)
-	cmdRestore := exec.Command(sqlite3Path, args...)
-	cmdRestore.Stdin = bytes.NewBuffer(backup.Bytes())
+	args := buildCommandArgsClear(database)
+	if err := internalutils.ValidateCommand(sqlite3Path, args, allowedSqliteCommands); err != nil {
+		return fmt.Errorf("invalid command arguments: %w", err)
+	}
+
+	cmdClear := exec.Command(sqlite3Path, args...) //#nosec
+	cmdClear.Env = []string{
+		"PATH=" + os.Getenv("PATH"),
+	}
 
 	var stderrClear bytes.Buffer
-	var stderrRestore bytes.Buffer
 	cmdClear.Stderr = &stderrClear
-	cmdRestore.Stderr = &stderrRestore
 
 	_, err = os.Stat(database.Path)
 	if !os.IsNotExist(err) {
@@ -49,6 +69,20 @@ func RunRestoration(database Sqlite3Requirements, backup *bytes.Buffer) error {
 		return fmt.Errorf("database creation before restoration failed: %w", err)
 	}
 	utils.LogInfo("Database '%s' recreated", "SQLITE3", database.Path)
+
+	args = buildCommandArgsRestore(database)
+	if err := internalutils.ValidateCommand(sqlite3Path, args, allowedSqliteCommands); err != nil {
+		return fmt.Errorf("invalid restore command arguments: %w", err)
+	}
+
+	cmdRestore := exec.Command(sqlite3Path, args...) //#nosec
+	cmdRestore.Env = []string{
+		"PATH=" + os.Getenv("PATH"),
+	}
+	cmdRestore.Stdin = bytes.NewBuffer(backup.Bytes())
+
+	var stderrRestore bytes.Buffer
+	cmdRestore.Stderr = &stderrRestore
 
 	err = cmdRestore.Run()
 	if err != nil {

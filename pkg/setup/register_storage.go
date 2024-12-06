@@ -45,9 +45,19 @@ func RegisterS3Storage(bucket_name string, access_key_id string, access_key_secr
 }
 
 func RegisterStorage(storageType StorageType, name string, retention int, cipher_key string, compression bool, storage interface{}) error {
-	if storage == nil {
-		return fmt.Errorf("storage is null")
+	// Validate inputs
+	if name == "" {
+		return fmt.Errorf("storage name cannot be empty")
 	}
+
+	if storage == nil {
+		return fmt.Errorf("storage requirements cannot be nil")
+	}
+
+	if retention < 0 {
+		return fmt.Errorf("retention period cannot be negative")
+	}
+
 	configMutex.Lock()
 	defer configMutex.Unlock()
 
@@ -75,11 +85,17 @@ func RegisterStorage(storageType StorageType, name string, retention int, cipher
 
 	switch req := storage.(type) {
 	case *localstorage.LocalStorageRequirements:
+		if req.FolderPath == "" {
+			return fmt.Errorf("local storage folder path cannot be empty")
+		}
 		newStorage.LocalStorage = *req
 	case *s3.S3Requirements:
+		if req.BucketName == "" || req.Region == "" {
+			return fmt.Errorf("S3 bucket name and region cannot be empty")
+		}
 		newStorage.S3 = *req
 	default:
-		return fmt.Errorf("unsupported storage type")
+		return fmt.Errorf("unsupported storage type: %T", storage)
 	}
 
 	// Find and update existing storage, or append new one
@@ -98,7 +114,7 @@ func RegisterStorage(storageType StorageType, name string, retention int, cipher
 		utils.LogInfo("Storage %s registered", "REGISTER STORAGE", name)
 	}
 
-	// Write the updated config back using the secure system
+	// Write the updated config back
 	if err := writeConfig(currentConfig); err != nil {
 		return fmt.Errorf("failed to write config: %w", err)
 	}

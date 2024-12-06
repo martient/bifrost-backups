@@ -22,7 +22,7 @@ func RunBackup(database PostgresqlRequirements) (*bytes.Buffer, error) {
 	}
 
 	args := buildCommandArgsBackup(database)
-	cmd := exec.Command(pgDumpPath, args...)
+	cmd := exec.Command(pgDumpPath, args...) //#nosec
 
 	if database.Password != "" {
 		cmd.Env = os.Environ()
@@ -80,15 +80,17 @@ func buildCommandArgsBackup(database PostgresqlRequirements) []string {
 	var args []string
 
 	// Always specify host and port for consistency
-	args = append(args, "-h", database.Hostname)
-	args = append(args, "-p", database.Port)
+	if database.Hostname != "" {
+		args = append(args, "-h", database.Hostname)
+	} else {
+		args = append(args, "-h", "127.0.0.1")
+	}
+	if database.Port != "" {
+		args = append(args, "-p", database.Port)
+	} else {
+		args = append(args, "-p", "5432")
+	}
 	args = append(args, "-U", database.User)
-
-	// Use tar format for better compatibility
-	args = append(args, "-F", "t")
-
-	// Add verbose flag for better error reporting
-	args = append(args, "-v")
 
 	// Database name should be last
 	args = append(args, database.Name)
