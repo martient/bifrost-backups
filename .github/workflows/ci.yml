@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest]
         go-version: ['1.23']
         include:
           - os: ubuntu-latest
@@ -107,7 +107,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest]
         go-version: ['1.23']
         include:
           - os: ubuntu-latest
@@ -118,10 +118,10 @@ jobs:
             artifact_name: bifrost-backup-darwin-amd64
             GOOS: darwin
             GOARCH: amd64
-          - os: windows-latest
-            artifact_name: bifrost-backup-windows-amd64.exe
-            GOOS: windows
-            GOARCH: amd64
+          # - os: windows-latest
+          #   artifact_name: bifrost-backup-windows-amd64.exe
+          #   GOOS: windows
+          #   GOARCH: amd64
     runs-on: ${{ matrix.os }}
     
     steps:
