@@ -28,13 +28,7 @@ func StoreBackup(storage LocalStorageRequirements, buffer *bytes.Buffer, useComp
 	}
 	currentTime := time.Now().UTC()
 
-	backupPath := filepath.Join(storage.FolderPath, fmt.Sprintf("%d-%02d-%02dT%02d:%02d:%03dZ",
-		currentTime.Year(),
-		currentTime.Month(),
-		currentTime.Day(),
-		currentTime.Hour(),
-		currentTime.Minute(),
-		currentTime.Second()))
+	backupPath := filepath.Join(storage.FolderPath, internalutils.FormatBackupTimestamp(currentTime)) // Use the imported function
 
 	// Validate backup path
 	allowedPaths := []string{storage.FolderPath}
