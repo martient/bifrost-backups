@@ -34,7 +34,7 @@ spec:
       containers:
       - name: bifrost-backup
         image: ghcr.io/martient/bifrost-backups:1.3.1
-        command: ["./bifrost-backup"]  # Adjust the command as needed
+        command: ["./bifrost-backup", "backup", "no-encryption", "--disable-update-check"]  # Adjust the command as needed
         volumeMounts:
         - name: bifrost-backup-config
           mountPath: /etc/bifrost-backup
