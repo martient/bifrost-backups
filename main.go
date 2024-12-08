@@ -5,7 +5,7 @@ import (
 	"log"
 
 	"github.com/getsentry/sentry-go"
-	"github.com/martient/bifrost-backup/cmd"
+	"github.com/martient/bifrost-backups/cmd"
 )
 
 var (

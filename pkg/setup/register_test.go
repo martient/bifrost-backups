@@ -5,11 +5,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/martient/bifrost-backup/pkg/local_files"
-	localstorage "github.com/martient/bifrost-backup/pkg/local_storage"
-	"github.com/martient/bifrost-backup/pkg/postgresql"
-	"github.com/martient/bifrost-backup/pkg/s3"
-	"github.com/martient/bifrost-backup/pkg/sqlite3"
+	"github.com/martient/bifrost-backups/pkg/local_files"
+	localstorage "github.com/martient/bifrost-backups/pkg/local_storage"
+	"github.com/martient/bifrost-backups/pkg/postgresql"
+	"github.com/martient/bifrost-backups/pkg/s3"
+	"github.com/martient/bifrost-backups/pkg/sqlite3"
 )
 
 func TestRegisterDatabase(t *testing.T) {

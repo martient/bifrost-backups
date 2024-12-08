@@ -3,7 +3,7 @@ package cmd
 import (
 	"syscall"
 
-	"github.com/martient/bifrost-backup/pkg/setup"
+	"github.com/martient/bifrost-backups/pkg/setup"
 	"github.com/martient/golang-utils/utils"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"

@@ -12,7 +12,7 @@ import (
 	"os/user"
 	"strings"
 
-	"github.com/martient/bifrost-backup/pkg/crypto"
+	"github.com/martient/bifrost-backups/pkg/crypto"
 	"github.com/zalando/go-keyring"
 )
 

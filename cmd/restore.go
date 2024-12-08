@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"encoding/base64"
 
-	"github.com/martient/bifrost-backup/pkg/crypto"
-	localstorage "github.com/martient/bifrost-backup/pkg/local_storage"
-	"github.com/martient/bifrost-backup/pkg/postgresql"
-	"github.com/martient/bifrost-backup/pkg/s3"
-	"github.com/martient/bifrost-backup/pkg/setup"
-	"github.com/martient/bifrost-backup/pkg/sqlite3"
+	"github.com/martient/bifrost-backups/pkg/crypto"
+	localstorage "github.com/martient/bifrost-backups/pkg/local_storage"
+	"github.com/martient/bifrost-backups/pkg/postgresql"
+	"github.com/martient/bifrost-backups/pkg/s3"
+	"github.com/martient/bifrost-backups/pkg/setup"
+	"github.com/martient/bifrost-backups/pkg/sqlite3"
 	"github.com/martient/golang-utils/utils"
 	"github.com/spf13/cobra"
 )
