@@ -1,11 +1,11 @@
 package setup
 
 import (
-	"github.com/martient/bifrost-backup/pkg/local_files"
-	localstorage "github.com/martient/bifrost-backup/pkg/local_storage"
-	"github.com/martient/bifrost-backup/pkg/postgresql"
-	"github.com/martient/bifrost-backup/pkg/s3"
-	"github.com/martient/bifrost-backup/pkg/sqlite3"
+	"github.com/martient/bifrost-backups/pkg/local_files"
+	localstorage "github.com/martient/bifrost-backups/pkg/local_storage"
+	"github.com/martient/bifrost-backups/pkg/postgresql"
+	"github.com/martient/bifrost-backups/pkg/s3"
+	"github.com/martient/bifrost-backups/pkg/sqlite3"
 )
 
 type DatabaseType int64
@@ -45,8 +45,8 @@ type Database struct {
 }
 
 type Config struct {
-	Version   string     `yaml:"version"`
+	Version    string     `yaml:"version"`
 	MasterHash string     `yaml:"master_hash,omitempty"`
-	Databases []Database `yaml:"databases,omitempty"`
-	Storages  []Storage  `yaml:"storages,omitempty"`
+	Databases  []Database `yaml:"databases,omitempty"`
+	Storages   []Storage  `yaml:"storages,omitempty"`
 }

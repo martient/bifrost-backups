@@ -6,7 +6,7 @@ import (
 	"os"
 	"os/exec"
 
-	internalutils "github.com/martient/bifrost-backup/pkg/utils"
+	internalutils "github.com/martient/bifrost-backups/pkg/utils"
 	"github.com/martient/golang-utils/utils"
 )
 
