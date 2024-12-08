@@ -81,7 +81,13 @@ func backupDirectory(sourcePath string, buffer *bytes.Buffer, config LocalFilesR
 }
 
 func backupFile(sourcePath string, buffer *bytes.Buffer) error {
-	sourceFile, err := os.Open(sourcePath)
+	// Validate the path
+	cleanPath := filepath.Clean(sourcePath)
+	if !filepath.IsAbs(cleanPath) {
+		return fmt.Errorf("source path must be absolute: %s", sourcePath)
+	}
+
+	sourceFile, err := os.Open(cleanPath)
 	if err != nil {
 		return fmt.Errorf("failed to open source file: %w", err)
 	}

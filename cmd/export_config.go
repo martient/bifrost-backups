@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"syscall"
@@ -67,5 +68,7 @@ var exportConfigCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(exportConfigCmd)
 	exportConfigCmd.Flags().String("output", "", "Path where to save the unciphered configuration file")
-	exportConfigCmd.MarkFlagRequired("output")
+	if err := exportConfigCmd.MarkFlagRequired("output"); err != nil {
+		panic(fmt.Sprintf("Failed to mark output flag as required: %v", err))
+	}
 }
