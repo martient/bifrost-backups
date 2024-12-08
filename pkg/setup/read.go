@@ -124,6 +124,71 @@ func writeConfig(config Config) error {
 	return nil
 }
 
+// UpdateConfig updates the configuration file with the provided config
+func UpdateConfig(config Config) error {
+	configMutex.Lock()
+	defer configMutex.Unlock()
+
+	// Initialize secure manager and encrypt sensitive fields if encryption is enabled
+	secureManager, err := NewSecureManager(noEncryption)
+	if err != nil {
+		return fmt.Errorf("failed to initialize secure manager: %w", err)
+	}
+
+	// Create a copy of the config to avoid modifying the original
+	configCopy := config
+	err = secureManager.SecureConfig(&configCopy)
+	if err != nil {
+		return fmt.Errorf("failed to encrypt config: %w", err)
+	}
+
+	// Create config directory if it doesn't exist
+	configDir := filepath.Dir(configFilePath)
+	if err := os.MkdirAll(configDir, 0700); err != nil {
+		return fmt.Errorf("failed to create config directory: %w", err)
+	}
+
+	// Write the config to a temporary file first
+	tempFile, err := os.CreateTemp(configDir, "bifrost_backups.*.yaml")
+	if err != nil {
+		return fmt.Errorf("failed to create temp config file: %w", err)
+	}
+	tempFilePath := tempFile.Name()
+
+	// Ensure temp file has secure permissions
+	if err := os.Chmod(tempFilePath, 0600); err != nil {
+		if removeErr := os.Remove(tempFilePath); removeErr != nil {
+			return fmt.Errorf("failed to set temp file permissions and cleanup failed: %v, %v", err, removeErr)
+		}
+		return fmt.Errorf("failed to set temp file permissions: %w", err)
+	}
+
+	// Write config to temp file
+	encoder := yaml.NewEncoder(tempFile)
+	if err := encoder.Encode(configCopy); err != nil {
+		if removeErr := os.Remove(tempFilePath); removeErr != nil {
+			return fmt.Errorf("failed to encode config and cleanup failed: %v, %v", err, removeErr)
+		}
+		return fmt.Errorf("failed to encode config: %w", err)
+	}
+	if err := tempFile.Close(); err != nil {
+		if removeErr := os.Remove(tempFilePath); removeErr != nil {
+			return fmt.Errorf("failed to close temp file and cleanup failed: %v, %v", err, removeErr)
+		}
+		return fmt.Errorf("failed to close temp file: %w", err)
+	}
+
+	// Atomically replace the old config file
+	if err := os.Rename(tempFilePath, configFilePath); err != nil {
+		if removeErr := os.Remove(tempFilePath); removeErr != nil {
+			return fmt.Errorf("failed to save config file and cleanup failed: %v, %v", err, removeErr)
+		}
+		return fmt.Errorf("failed to save config file: %w", err)
+	}
+
+	return nil
+}
+
 func GetDatabaseConfigName() ([]string, error) {
 	config, err := readConfig()
 	var names []string

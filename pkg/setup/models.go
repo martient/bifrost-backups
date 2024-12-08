@@ -46,6 +46,7 @@ type Database struct {
 
 type Config struct {
 	Version   string     `yaml:"version"`
+	MasterHash string     `yaml:"master_hash,omitempty"`
 	Databases []Database `yaml:"databases,omitempty"`
 	Storages  []Storage  `yaml:"storages,omitempty"`
 }
