@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/martient/bifrost-backup/pkg/local_files"
 	localstorage "github.com/martient/bifrost-backup/pkg/local_storage"
 	"github.com/martient/bifrost-backup/pkg/postgresql"
 	"github.com/martient/bifrost-backup/pkg/s3"
@@ -39,6 +40,16 @@ func TestRegisterDatabase(t *testing.T) {
 			dbType: Sqlite3,
 			dbName: "test_sqlite",
 			requirements: &sqlite3.Sqlite3Requirements{
+				Path: "/tmp/test.db",
+			},
+			cronExpr: "0 0 * * *",
+			wantErr:  false,
+		},
+		{
+			name:   "Register Local Files database",
+			dbType: LocalFiles,
+			dbName: "test_local",
+			requirements: &localfiles.LocalFilesRequirements{
 				Path: "/tmp/test.db",
 			},
 			cronExpr: "0 0 * * *",
@@ -121,64 +132,64 @@ func TestRegisterDatabase(t *testing.T) {
 
 func TestRegisterStorage(t *testing.T) {
 	tests := []struct {
-		name           string
-		storageType    StorageType
-		storageName    string
-		retentionDays  int
-		cipherKey      string
-		compression    bool
-		storageReq     interface{}
-		wantErr        bool
+		name          string
+		storageType   StorageType
+		storageName   string
+		retentionDays int
+		cipherKey     string
+		compression   bool
+		storageReq    interface{}
+		wantErr       bool
 	}{
 		{
-			name:           "Register local storage",
-			storageType:    LocalStorage,
-			storageName:    "test_local",
-			retentionDays:  7,
-			cipherKey:      "test-key",
-			compression:    true,
-			storageReq:     &localstorage.LocalStorageRequirements{FolderPath: "/tmp/backup"},
-			wantErr:        false,
+			name:          "Register local storage",
+			storageType:   LocalStorage,
+			storageName:   "test_local",
+			retentionDays: 7,
+			cipherKey:     "test-key",
+			compression:   true,
+			storageReq:    &localstorage.LocalStorageRequirements{FolderPath: "/tmp/backup"},
+			wantErr:       false,
 		},
 		{
-			name:           "Register S3 storage",
-			storageType:    S3,
-			storageName:    "test_s3",
-			retentionDays:  7,
-			cipherKey:      "test-key",
-			compression:    true,
-			storageReq:     &s3.S3Requirements{BucketName: "test-bucket", Region: "us-east-1"},
-			wantErr:        false,
+			name:          "Register S3 storage",
+			storageType:   S3,
+			storageName:   "test_s3",
+			retentionDays: 7,
+			cipherKey:     "test-key",
+			compression:   true,
+			storageReq:    &s3.S3Requirements{BucketName: "test-bucket", Region: "us-east-1"},
+			wantErr:       false,
 		},
 		{
-			name:           "Invalid storage type",
-			storageType:    StorageType(999),
-			storageName:    "test_invalid",
-			retentionDays:  7,
-			cipherKey:      "test-key",
-			compression:    true,
-			storageReq:     &struct{}{}, // Invalid type
-			wantErr:        true,
+			name:          "Invalid storage type",
+			storageType:   StorageType(999),
+			storageName:   "test_invalid",
+			retentionDays: 7,
+			cipherKey:     "test-key",
+			compression:   true,
+			storageReq:    &struct{}{}, // Invalid type
+			wantErr:       true,
 		},
 		{
-			name:           "Empty storage name",
-			storageType:    LocalStorage,
-			storageName:    "",
-			retentionDays:  7,
-			cipherKey:      "test-key",
-			compression:    true,
-			storageReq:     &localstorage.LocalStorageRequirements{FolderPath: "/tmp/backup"},
-			wantErr:        true,
+			name:          "Empty storage name",
+			storageType:   LocalStorage,
+			storageName:   "",
+			retentionDays: 7,
+			cipherKey:     "test-key",
+			compression:   true,
+			storageReq:    &localstorage.LocalStorageRequirements{FolderPath: "/tmp/backup"},
+			wantErr:       true,
 		},
 		{
-			name:           "Invalid retention period",
-			storageType:    LocalStorage,
-			storageName:    "test_invalid_retention",
-			retentionDays:  -1,
-			cipherKey:      "test-key",
-			compression:    true,
-			storageReq:     &localstorage.LocalStorageRequirements{FolderPath: "/tmp/backup"},
-			wantErr:        true,
+			name:          "Invalid retention period",
+			storageType:   LocalStorage,
+			storageName:   "test_invalid_retention",
+			retentionDays: -1,
+			cipherKey:     "test-key",
+			compression:   true,
+			storageReq:    &localstorage.LocalStorageRequirements{FolderPath: "/tmp/backup"},
+			wantErr:       true,
 		},
 	}
 

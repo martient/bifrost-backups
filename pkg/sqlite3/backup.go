@@ -37,10 +37,9 @@ func RunBackup(database Sqlite3Requirements) (*bytes.Buffer, error) {
 func validateRequirements(database Sqlite3Requirements) error {
 	if database == (Sqlite3Requirements{}) {
 		return fmt.Errorf("database requirements cannot be empty")
+	} else if database.Path == "" {
+		return fmt.Errorf("database path cannot be empty")
 	}
-
-	// Add additional validation checks for port, hostname, etc.
-
 	return nil
 }
 
