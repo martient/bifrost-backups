@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -59,105 +60,115 @@ func New(currentVersion, githubRepo string, channel UpdateChannel) (*Updater, er
 
 // Check looks for available updates
 func (u *Updater) Check() (*ReleaseInfo, error) {
-	if u.cache != nil && !u.isCacheExpired() {
-		version, err := semver.ParseTolerant(u.cache.LatestVersion)
-		if err != nil {
-			return nil, fmt.Errorf("invalid cached version: %w", err)
-		}
-		return &ReleaseInfo{
-			Version:      version,
-			Channel:      u.cache.Channel,
-			AssetURL:     "", // Cache doesn't store URL
-			ReleaseNotes: "",
-		}, nil
+	// Check if we need to update based on the cache
+	if !u.needsCheck() {
+		return nil, nil
 	}
 
-	release, err := u.fetchLatestRelease()
+	// Get the latest release
+	release, err := u.getLatestRelease()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get latest release: %w", err)
 	}
 
-	u.updateCache(release)
-	return release, nil
+	if err := u.updateCache(release); err != nil {
+		return nil, fmt.Errorf("failed to update cache: %w", err)
+	}
+
+	// Compare versions
+	currentVersion, err := semver.Parse(u.CurrentVersion)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse current version: %w", err)
+	}
+
+	if release.Version.GT(currentVersion) {
+		return release, nil
+	}
+
+	return nil, nil
 }
 
 // Update performs the actual update
 func (u *Updater) Update(release *ReleaseInfo) error {
+	// Start telemetry
 	telemetry := &TelemetryData{
 		Timestamp:   time.Now(),
 		FromVersion: u.CurrentVersion,
 		ToVersion:   release.Version.String(),
 		Channel:     u.Channel,
+		Success:     false,
 	}
+	defer func() {
+		if err := u.saveTelemetry(telemetry); err != nil {
+			log.Printf("Failed to save telemetry: %v", err)
+		}
+	}()
 
-	defer u.saveTelemetry(telemetry)
-
+	// Get the executable path
 	exe, err := os.Executable()
 	if err != nil {
-		telemetry.Success = false
 		telemetry.ErrorMessage = err.Error()
 		return fmt.Errorf("failed to get executable path: %w", err)
 	}
 
-	// Backup current binary
-	if err := u.backupCurrentBinary(exe); err != nil {
-		telemetry.Success = false
-		telemetry.ErrorMessage = err.Error()
-		return err
-	}
-
-	// Download new binary
-	binary, err := u.downloadRelease(release.AssetURL)
+	// Create a temporary file for the download
+	tmpFile, err := os.CreateTemp("", "bifrost-backup-*")
 	if err != nil {
-		telemetry.Success = false
 		telemetry.ErrorMessage = err.Error()
-		u.rollback(exe)
-		return err
+		return fmt.Errorf("failed to create temporary file: %w", err)
+	}
+	defer os.Remove(tmpFile.Name())
+
+	// Download the binary
+	if err := u.downloadBinary(release, tmpFile); err != nil {
+		telemetry.ErrorMessage = err.Error()
+		if rollbackErr := u.rollback(exe); rollbackErr != nil {
+			log.Printf("Failed to rollback: %v", rollbackErr)
+		}
+		return fmt.Errorf("failed to download binary: %w", err)
 	}
 
-	// Verify checksum
+	// Read the downloaded binary for verification
+	binary, err := os.ReadFile(tmpFile.Name())
+	if err != nil {
+		telemetry.ErrorMessage = err.Error()
+		if rollbackErr := u.rollback(exe); rollbackErr != nil {
+			log.Printf("Failed to rollback: %v", rollbackErr)
+		}
+		return fmt.Errorf("failed to read downloaded binary: %w", err)
+	}
+
+	// Verify the checksum
 	if err := u.verifyChecksum(binary, release.Checksum); err != nil {
-		telemetry.Success = false
 		telemetry.ErrorMessage = err.Error()
-		u.rollback(exe)
-		return err
+		if rollbackErr := u.rollback(exe); rollbackErr != nil {
+			log.Printf("Failed to rollback: %v", rollbackErr)
+		}
+		return fmt.Errorf("failed to verify checksum: %w", err)
 	}
 
-	// Verify signature
+	// Verify the signature
 	if err := u.verifySignature(binary, release.Signature); err != nil {
-		telemetry.Success = false
 		telemetry.ErrorMessage = err.Error()
-		u.rollback(exe)
-		return err
+		if rollbackErr := u.rollback(exe); rollbackErr != nil {
+			log.Printf("Failed to rollback: %v", rollbackErr)
+		}
+		return fmt.Errorf("failed to verify signature: %w", err)
 	}
 
-	// Write new binary
-	if err := os.WriteFile(exe, binary, 0755); err != nil {
-		telemetry.Success = false
+	// Replace the old binary with the new one
+	if err := u.replaceBinary(tmpFile, exe); err != nil {
 		telemetry.ErrorMessage = err.Error()
-		u.rollback(exe)
-		return err
+		return fmt.Errorf("failed to replace binary: %w", err)
 	}
 
 	telemetry.Success = true
-
-	// Save restart info
-	if err := u.SaveRestartInfo(); err != nil {
-		return err
-	}
-
-	// Restart the process
-	return u.RestartAfterUpdate()
+	return nil
 }
 
 // GetChangelog retrieves the changelog for the release
 func (u *Updater) GetChangelog(release *ReleaseInfo) string {
 	return release.ReleaseNotes
-}
-
-func (u *Updater) backupCurrentBinary(exe string) error {
-	backupPath := exe + ".backup"
-	return os.Rename(exe, backupPath)
 }
 
 func (u *Updater) rollback(exe string) error {
@@ -191,62 +202,66 @@ func (u *Updater) verifySignature(binary []byte, signature string) error {
 	return nil
 }
 
-func (u *Updater) downloadRelease(url string) ([]byte, error) {
-	resp, err := http.Get(url)
+func (u *Updater) downloadBinary(release *ReleaseInfo, tmpFile *os.File) error {
+	resp, err := http.Get(release.AssetURL)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	defer resp.Body.Close()
 
-	return io.ReadAll(resp.Body)
+	_, err = io.Copy(tmpFile, resp.Body)
+	return err
+}
+
+func (u *Updater) replaceBinary(tmpFile *os.File, exe string) error {
+	tmpFile.Close()
+	return os.Rename(tmpFile.Name(), exe)
 }
 
 func (u *Updater) saveTelemetry(data *TelemetryData) error {
 	var telemetry []TelemetryData
 
 	// Read existing telemetry
-	if content, err := os.ReadFile(u.TelemetryPath); err == nil {
-		json.Unmarshal(content, &telemetry)
+	if content, err := os.ReadFile(u.getTelemetryPath()); err == nil {
+		if err := json.Unmarshal(content, &telemetry); err != nil {
+			return fmt.Errorf("failed to unmarshal telemetry: %w", err)
+		}
 	}
 
-	// Append new data
+	// Append new telemetry
 	telemetry = append(telemetry, *data)
 
-	// Keep only last 100 entries
-	if len(telemetry) > 100 {
-		telemetry = telemetry[len(telemetry)-100:]
-	}
-
-	// Save to file
+	// Write back to file
 	content, err := json.Marshal(telemetry)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to marshal telemetry: %w", err)
 	}
 
-	return os.WriteFile(u.TelemetryPath, content, 0640)
+	return os.WriteFile(u.getTelemetryPath(), content, 0640)
 }
 
-func (u *Updater) isCacheExpired() bool {
+// func (u *Updater) loadTelemetry() (*TelemetryData, error) {
+// 	content, err := os.ReadFile(u.getTelemetryPath())
+// 	if err != nil {
+// 		if os.IsNotExist(err) {
+// 			return &TelemetryData{}, nil
+// 		}
+// 		return nil, err
+// 	}
+
+// 	var telemetry TelemetryData
+// 	if err := json.Unmarshal(content, &telemetry); err != nil {
+// 		return nil, fmt.Errorf("failed to unmarshal telemetry: %w", err)
+// 	}
+
+// 	return &telemetry, nil
+// }
+
+func (u *Updater) needsCheck() bool {
 	return time.Since(u.cache.LastCheck) > u.cache.TTL
 }
 
-func (u *Updater) updateCache(release *ReleaseInfo) error {
-	u.cache = &UpdateCache{
-		LastCheck:     time.Now(),
-		LatestVersion: release.Version.String(),
-		Channel:       u.Channel,
-		TTL:           24 * time.Hour,
-	}
-
-	content, err := json.Marshal(u.cache)
-	if err != nil {
-		return err
-	}
-
-	return os.WriteFile(u.CacheFile, content, 0640)
-}
-
-func (u *Updater) fetchLatestRelease() (*ReleaseInfo, error) {
+func (u *Updater) getLatestRelease() (*ReleaseInfo, error) {
 	owner, repo, found := strings.Cut(u.GithubRepo, "/")
 	if !found {
 		return nil, fmt.Errorf("invalid github repo format: %s", u.GithubRepo)
@@ -367,6 +382,14 @@ func getPlatformArch() string {
 	}
 }
 
+// // Mock for os.Exit
+// var osExit = func(code int) {
+// 	if os.Getenv("TEST_UPDATE_SUBPROCESS") == "1" {
+// 		os.Exit(code)
+// 	}
+// 	panic("os.Exit called")
+// }
+
 // SaveRestartInfo saves the current command information for restart after update
 func (u *Updater) SaveRestartInfo() error {
 	info := &RestartInfo{
@@ -428,7 +451,7 @@ func (u *Updater) RestartAfterUpdate() error {
 	}
 
 	// Exit the current process
-	os.Exit(0)
+	// osExit(0)
 	return nil
 }
 
@@ -438,4 +461,24 @@ func getCurrentWorkingDir() string {
 		return ""
 	}
 	return dir
+}
+
+func (u *Updater) updateCache(release *ReleaseInfo) error {
+	u.cache = &UpdateCache{
+		LastCheck:     time.Now(),
+		LatestVersion: release.Version.String(),
+		Channel:       u.Channel,
+		TTL:           24 * time.Hour,
+	}
+
+	content, err := json.Marshal(u.cache)
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(u.CacheFile, content, 0640)
+}
+
+func (u *Updater) getTelemetryPath() string {
+	return u.TelemetryPath
 }
