@@ -51,7 +51,7 @@ func WriteConfigUnciphered(path string, config Config) error {
 	}
 
 	// Create the file with secure permissions
-	file, err := os.OpenFile(cleanPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0640)
+	file, err := os.OpenFile(cleanPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
 		return fmt.Errorf("error creating config file: %w", err)
 	}
