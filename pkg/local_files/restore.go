@@ -80,7 +80,7 @@ func RunRestore(config LocalFilesRequirements, backupData *bytes.Buffer) error {
 
 			// Create the file
 			var err error
-			currentFile, err = os.OpenFile(cleanPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0640)
+			currentFile, err = os.OpenFile(cleanPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 			if err != nil {
 				return fmt.Errorf("failed to create file: %w", err)
 			}
