@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/martient/bifrost-backups/pkg/updater"
 	"github.com/martient/golang-utils/utils"
@@ -53,8 +54,15 @@ var updateCmd = &cobra.Command{
 		if !autoConfirm {
 			fmt.Printf("Do you want to update to version %s? [y/N] ", release.Version)
 			var response string
-			fmt.Scanln(&response)
-			if response != "y" && response != "Y" {
+			if _, err := fmt.Scanln(&response); err != nil {
+				if err.Error() != "unexpected newline" {
+					utils.LogError("Failed to read response: %v", "Updater", err)
+					os.Exit(1)
+				}
+			}
+			response = strings.ToLower(strings.TrimSpace(response))
+			if response != "y" && response != "yes" {
+				fmt.Println("Update cancelled")
 				return
 			}
 		}

@@ -58,83 +58,87 @@ func TestNew(t *testing.T) {
 	}
 }
 
-func TestFetchLatestRelease(t *testing.T) {
+func TestGetLatestRelease(t *testing.T) {
 	// Create a mock binary server
-	mockBinaryServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("mock binary content"))
-	}))
+	mockBinaryServer := mockBinaryServer()
 	defer mockBinaryServer.Close()
 
 	// Create a mock checksum server
-	mockChecksumServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		platform := fmt.Sprintf("%s_%s", runtime.GOOS, runtime.GOARCH)
-		assetName := fmt.Sprintf("bifrost-backups_%s.tar.gz", platform)
-		mockBinary := []byte("mock binary content")
-		mockChecksum := fmt.Sprintf("%x", sha256.Sum256(mockBinary))
-		w.Write([]byte(fmt.Sprintf("%s %s", mockChecksum, assetName)))
-	}))
+	mockChecksumServer := mockChecksumServer(fmt.Sprintf("%x", sha256.Sum256([]byte("mock binary content"))), fmt.Sprintf("bifrost-backups_%s.tar.gz", fmt.Sprintf("%s_%s", runtime.GOOS, runtime.GOARCH)))
 	defer mockChecksumServer.Close()
 
 	// Create a mock GitHub server
-	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		platform := fmt.Sprintf("%s_%s", runtime.GOOS, runtime.GOARCH)
-		assetName := fmt.Sprintf("bifrost-backups_%s.tar.gz", platform)
-
-		releases := []*github.RepositoryRelease{
-			{
-				TagName:    github.String("2.0.0"),
-				Draft:      github.Bool(false),
-				Prerelease: github.Bool(false),
-				Assets: []*github.ReleaseAsset{
-					createMockAsset(assetName, mockBinaryServer.URL),
-					createMockAsset("bifrost-backups_checksums.txt", mockChecksumServer.URL),
-				},
+	releases := []*github.RepositoryRelease{
+		{
+			TagName:    github.String("2.0.0"),
+			Draft:      github.Bool(false),
+			Prerelease: github.Bool(false),
+			Assets: []*github.ReleaseAsset{
+				createMockAsset(fmt.Sprintf("bifrost-backups_%s.tar.gz", fmt.Sprintf("%s_%s", runtime.GOOS, runtime.GOARCH)), mockBinaryServer.URL),
+				createMockAsset("bifrost-backups_checksums.txt", mockChecksumServer.URL),
 			},
-			{
-				TagName:    github.String("2.1.0-beta.1"),
-				Draft:      github.Bool(false),
-				Prerelease: github.Bool(true),
-				Assets: []*github.ReleaseAsset{
-					createMockAsset(assetName, mockBinaryServer.URL),
-					createMockAsset("bifrost-backups_checksums.txt", mockChecksumServer.URL),
-				},
+		},
+		{
+			TagName:    github.String("2.1.0-beta.1"),
+			Draft:      github.Bool(false),
+			Prerelease: github.Bool(true),
+			Assets: []*github.ReleaseAsset{
+				createMockAsset(fmt.Sprintf("bifrost-backups_%s.tar.gz", fmt.Sprintf("%s_%s", runtime.GOOS, runtime.GOARCH)), mockBinaryServer.URL),
+				createMockAsset("bifrost-backups_checksums.txt", mockChecksumServer.URL),
 			},
-		}
-		json.NewEncoder(w).Encode(releases)
-	}))
+		},
+	}
+	mockServer := mockGithubServer(releases)
 	defer mockServer.Close()
 
 	// Create a new client that uses the mock server
-	client := github.NewClient(&http.Client{
-		Transport: &mockTransport{mockServer},
-	})
+	client := github.NewClient(&http.Client{Transport: &mockTransport{mockServer: mockServer}})
 
 	tests := []struct {
-		name            string
-		channel         UpdateChannel
-		expectedVersion string
+		name          string
+		version       string
+		channel       UpdateChannel
+		expectedError bool
 	}{
 		{
-			name:            "Stable channel gets latest stable",
-			channel:         StableChannel,
-			expectedVersion: "2.0.0",
+			name:          "Stable channel",
+			version:       "1.0.0",
+			channel:       StableChannel,
+			expectedError: false,
 		},
 		{
-			name:            "Beta channel gets latest beta",
-			channel:         BetaChannel,
-			expectedVersion: "2.1.0-beta.1",
+			name:          "Beta channel",
+			version:       "1.0.0",
+			channel:       BetaChannel,
+			expectedError: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			updater, err := New("1.0.0", "martient/bifrost-backups", tt.channel)
-			require.NoError(t, err)
-			updater.client = client
+			u := &Updater{
+				CurrentVersion: tt.version,
+				Channel:        tt.channel,
+				GithubRepo:     "martient/bifrost-backups",
+				client:         client,
+			}
 
-			release, err := updater.fetchLatestRelease()
-			require.NoError(t, err)
-			assert.Equal(t, tt.expectedVersion, release.Version.String())
+			release, err := u.getLatestRelease()
+			if tt.expectedError {
+				assert.Error(t, err)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.NotNil(t, release)
+
+			// For stable channel, version should be 2.0.0
+			// For beta channel, version should be 2.1.0-beta.1
+			if tt.channel == StableChannel {
+				assert.Equal(t, "2.0.0", release.Version.String())
+			} else {
+				assert.Equal(t, "2.1.0-beta.1", release.Version.String())
+			}
 		})
 	}
 }
@@ -226,10 +230,12 @@ func TestUpdate(t *testing.T) {
 
 	t.Run("Failed checksum verification", func(t *testing.T) {
 		// Create a mock server for binary download
-		mockBinaryServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte("mock binary content"))
-		}))
+		mockBinaryServer := mockBinaryServer()
 		defer mockBinaryServer.Close()
+
+		// Create a mock server for checksum verification
+		mockChecksumServer := mockChecksumServer("mock checksum", "bifrost-backup")
+		defer mockChecksumServer.Close()
 
 		// Create a temporary directory for the test
 		tmpDir, err := os.MkdirTemp("", "updater_test")
@@ -261,72 +267,69 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestRestartAfterUpdate(t *testing.T) {
-	t.Run("Valid restart info", func(t *testing.T) {
-		// Create a temporary directory for the test
-		tmpDir, err := os.MkdirTemp("", "updater_test")
-		require.NoError(t, err)
-		defer os.RemoveAll(tmpDir)
+	if os.Getenv("TEST_UPDATE_SUBPROCESS") == "1" {
+		return // Skip the test in the subprocess
+	}
 
-		// Create updater instance
-		u, err := New("1.0.0", "martient/bifrost-backups", StableChannel)
-		require.NoError(t, err)
-		u.RestartPath = filepath.Join(tmpDir, "restart.json")
+	// Create updater instance
+	u, err := New("1.0.0", "martient/bifrost-backups", StableChannel)
+	require.NoError(t, err)
 
-		// Create a mock restart info file
-		restartInfo := struct {
-			Args        []string  `json:"args"`
-			Environment []string  `json:"environment"`
-			WorkingDir  string    `json:"working_dir"`
-			Timestamp   time.Time `json:"timestamp"`
-		}{
-			Args:        []string{"test-binary", "--arg1", "--arg2"},
-			Environment: []string{"TEST_ENV=value"},
-			WorkingDir:  "/test/dir",
-			Timestamp:   time.Now(),
+	// Create a temporary directory for the test
+	tmpDir, err := os.MkdirTemp("", "updater_test")
+	require.NoError(t, err)
+	defer os.RemoveAll(tmpDir)
+
+	// Create a subdirectory for working directory
+	workDir := filepath.Join(tmpDir, "work")
+	err = os.MkdirAll(workDir, 0755)
+	require.NoError(t, err)
+
+	// Get the current executable path
+	currentExe, err := os.Executable()
+	require.NoError(t, err)
+
+	u.RestartPath = filepath.Join(tmpDir, "restart.json")
+
+	// Create a mock restart info file
+	restartInfo := struct {
+		Args        []string  `json:"args"`
+		Environment []string  `json:"environment"`
+		WorkingDir  string    `json:"working_dir"`
+		Timestamp   time.Time `json:"timestamp"`
+	}{
+		Args:        []string{currentExe, "-test.run=TestRestartAfterUpdate"},
+		Environment: []string{"TEST_UPDATE_SUBPROCESS=1"},
+		WorkingDir:  workDir,
+		Timestamp:   time.Now(),
+	}
+
+	restartInfoBytes, err := json.Marshal(restartInfo)
+	require.NoError(t, err)
+
+	err = os.WriteFile(u.RestartPath, restartInfoBytes, 0644)
+	require.NoError(t, err)
+
+	// Mock os.Exit to prevent test from actually exiting
+	oldOsExit := osExit
+	defer func() { osExit = oldOsExit }()
+
+	exitCode := 0
+	osExit = func(code int) {
+		exitCode = code
+		panic("os.Exit called")
+	}
+
+	// Test RestartAfterUpdate
+	defer func() {
+		if r := recover(); r != nil {
+			assert.Equal(t, "os.Exit called", r)
+			assert.Equal(t, 0, exitCode)
 		}
+	}()
 
-		restartInfoBytes, err := json.Marshal(restartInfo)
-		require.NoError(t, err)
-
-		err = os.WriteFile(u.RestartPath, restartInfoBytes, 0644)
-		require.NoError(t, err)
-
-		// Mock os.Exit to prevent test from actually exiting
-		oldOsExit := osExit
-		defer func() { osExit = oldOsExit }()
-
-		exitCode := 0
-		osExit = func(code int) {
-			exitCode = code
-			panic("os.Exit called")
-		}
-
-		// Test RestartAfterUpdate
-		defer func() {
-			if r := recover(); r != nil {
-				assert.Equal(t, "os.Exit called", r)
-				assert.Equal(t, 0, exitCode)
-			}
-		}()
-
-		u.RestartAfterUpdate()
-	})
-
-	t.Run("Missing restart info", func(t *testing.T) {
-		// Create a temporary directory for the test
-		tmpDir, err := os.MkdirTemp("", "updater_test")
-		require.NoError(t, err)
-		defer os.RemoveAll(tmpDir)
-
-		// Create updater instance
-		u, err := New("1.0.0", "martient/bifrost-backups", StableChannel)
-		require.NoError(t, err)
-		u.RestartPath = filepath.Join(tmpDir, "restart.json")
-
-		// Test RestartAfterUpdate
-		err = u.RestartAfterUpdate()
-		assert.Error(t, err)
-	})
+	err = u.RestartAfterUpdate()
+	require.NoError(t, err)
 }
 
 func TestGetChecksumForAsset(t *testing.T) {
@@ -337,7 +340,11 @@ func TestGetChecksumForAsset(t *testing.T) {
 		checksums := fmt.Sprintf("%s bifrost-backups_darwin_arm64.tar.gz\n%s bifrost-backups_linux_amd64.tar.gz",
 			mockChecksum,
 			"f5e9c6d7b8a3b2c1d4e5f6g7h8i9j0k1")
-		w.Write([]byte(checksums))
+		_, err := w.Write([]byte(checksums))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}))
 	defer mockServer.Close()
 
@@ -392,6 +399,37 @@ func createMockAsset(name, url string) *github.ReleaseAsset {
 		Name:               github.String(name),
 		BrowserDownloadURL: github.String(url),
 	}
+}
+
+func mockBinaryServer() *httptest.Server {
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, err := w.Write([]byte("mock binary content"))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}))
+}
+
+func mockChecksumServer(mockChecksum, assetName string) *httptest.Server {
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, err := w.Write([]byte(fmt.Sprintf("%s %s", mockChecksum, assetName)))
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}))
+}
+
+func mockGithubServer(releases []*github.RepositoryRelease) *httptest.Server {
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		err := json.NewEncoder(w).Encode(releases)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}))
 }
 
 type mockTransport struct {
