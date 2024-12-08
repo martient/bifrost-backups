@@ -214,7 +214,10 @@ func (u *Updater) downloadBinary(release *ReleaseInfo, tmpFile *os.File) error {
 }
 
 func (u *Updater) replaceBinary(tmpFile *os.File, exe string) error {
-	tmpFile.Close()
+	err := tmpFile.Close()
+	if err != nil {
+		return err
+	}
 	return os.Rename(tmpFile.Name(), exe)
 }
 
@@ -237,7 +240,7 @@ func (u *Updater) saveTelemetry(data *TelemetryData) error {
 		return fmt.Errorf("failed to marshal telemetry: %w", err)
 	}
 
-	return os.WriteFile(u.getTelemetryPath(), content, 0640)
+	return os.WriteFile(u.getTelemetryPath(), content, 0600)
 }
 
 // func (u *Updater) loadTelemetry() (*TelemetryData, error) {
@@ -404,7 +407,7 @@ func (u *Updater) SaveRestartInfo() error {
 		return err
 	}
 
-	return os.WriteFile(u.RestartPath, content, 0640)
+	return os.WriteFile(u.RestartPath, content, 0600)
 }
 
 // RestartAfterUpdate restarts the previously running command
@@ -420,7 +423,10 @@ func (u *Updater) RestartAfterUpdate() error {
 	}
 
 	// Clean up restart info file
-	os.Remove(u.RestartPath)
+	err = os.Remove(u.RestartPath)
+	if err != nil {
+		return err
+	}
 
 	// Prepare the new process
 	executable, err := os.Executable()
@@ -476,7 +482,7 @@ func (u *Updater) updateCache(release *ReleaseInfo) error {
 		return err
 	}
 
-	return os.WriteFile(u.CacheFile, content, 0640)
+	return os.WriteFile(u.CacheFile, content, 0600)
 }
 
 func (u *Updater) getTelemetryPath() string {
