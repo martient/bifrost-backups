@@ -64,7 +64,7 @@ func TestGetLatestRelease(t *testing.T) {
 	defer mockBinaryServer.Close()
 
 	// Create a mock checksum server
-	mockChecksumServer := mockChecksumServer(fmt.Sprintf("%x", sha256.Sum256([]byte("mock binary content"))), fmt.Sprintf("bifrost-backups_%s.tar.gz", fmt.Sprintf("%s_%s", runtime.GOOS, runtime.GOARCH)))
+	mockChecksumServer := mockChecksumServer(fmt.Sprintf("%x", sha256.Sum256([]byte("mock binary content"))), fmt.Sprintf("bifrost-backups_%s.tar.gz", fmt.Sprintf("%s_%s", runtime.GOOS, getPlatformArch())))
 	defer mockChecksumServer.Close()
 
 	// Create a mock GitHub server
@@ -74,7 +74,7 @@ func TestGetLatestRelease(t *testing.T) {
 			Draft:      github.Bool(false),
 			Prerelease: github.Bool(false),
 			Assets: []*github.ReleaseAsset{
-				createMockAsset(fmt.Sprintf("bifrost-backups_%s.tar.gz", fmt.Sprintf("%s_%s", runtime.GOOS, runtime.GOARCH)), mockBinaryServer.URL),
+				createMockAsset(fmt.Sprintf("bifrost-backups_%s.tar.gz", fmt.Sprintf("%s_%s", runtime.GOOS, getPlatformArch())), mockBinaryServer.URL),
 				createMockAsset("bifrost-backups_checksums.txt", mockChecksumServer.URL),
 			},
 		},
@@ -83,7 +83,7 @@ func TestGetLatestRelease(t *testing.T) {
 			Draft:      github.Bool(false),
 			Prerelease: github.Bool(true),
 			Assets: []*github.ReleaseAsset{
-				createMockAsset(fmt.Sprintf("bifrost-backups_%s.tar.gz", fmt.Sprintf("%s_%s", runtime.GOOS, runtime.GOARCH)), mockBinaryServer.URL),
+				createMockAsset(fmt.Sprintf("bifrost-backups_%s.tar.gz", fmt.Sprintf("%s_%s", runtime.GOOS, getPlatformArch())), mockBinaryServer.URL),
 				createMockAsset("bifrost-backups_checksums.txt", mockChecksumServer.URL),
 			},
 		},
@@ -341,7 +341,7 @@ func TestGetChecksumForAsset(t *testing.T) {
 	defer mockBinaryServer.Close()
 
 	// Create a mock checksum server
-	mockChecksumServer := mockChecksumServer(mockChecksum, fmt.Sprintf("bifrost-backups_%s.tar.gz", fmt.Sprintf("%s_%s", runtime.GOOS, runtime.GOARCH)))
+	mockChecksumServer := mockChecksumServer(mockChecksum, fmt.Sprintf("bifrost-backups_%s.tar.gz", fmt.Sprintf("%s_%s", runtime.GOOS, getPlatformArch())))
 	defer mockChecksumServer.Close()
 
 	tests := []struct {
@@ -353,7 +353,7 @@ func TestGetChecksumForAsset(t *testing.T) {
 	}{
 		{
 			name:           "Valid checksum macos",
-			assetName:      fmt.Sprintf("bifrost-backups_%s.tar.gz", fmt.Sprintf("%s_%s", runtime.GOOS, runtime.GOARCH)),
+			assetName:      fmt.Sprintf("bifrost-backups_%s.tar.gz", fmt.Sprintf("%s_%s", runtime.GOOS, getPlatformArch())),
 			expectedHash:   mockChecksum,
 			expectError:    false,
 			checksumServer: mockChecksumServer,
