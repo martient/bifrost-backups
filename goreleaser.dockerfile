@@ -1,7 +1,8 @@
-FROM alpine:latest
+FROM --platform=$BUILDPLATFORM alpine:latest
 
 SHELL ["/bin/ash", "-c"]
 RUN apk add --no-cache postgresql-client
 
-COPY bifrost-backups /bifrost-backups
+ARG TARGETARCH
+COPY bifrost-backups_linux_${TARGETARCH}/bifrost-backups /bifrost-backups
 ENTRYPOINT ["/bifrost-backups"]

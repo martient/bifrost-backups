@@ -23,25 +23,48 @@ builds:
       - windows
       - darwin
 
+# dockers:
+#   - image_templates:
+#       - "ghcr.io/martient/bifrost-backups:{{ .Version }}-amd64"
+#     use: buildx
+#     dockerfile: goreleaser.dockerfile
+#     build_flag_templates:
+#       - "--platform=linux/amd64"
+#   - image_templates:
+#       - "ghcr.io/martient/bifrost-backups:{{ .Version }}-arm64v8"
+#     use: buildx
+#     goarch: arm64
+#     dockerfile: goreleaser.dockerfile
+#     build_flag_templates:
+#       - "--platform=linux/arm64/v8"
+# docker_manifests:
+#   - name_template: "ghcr.io/martient/bifrost-backups:{{ .Version }}"
+#     image_templates:
+#       - "ghcr.io/martient/bifrost-backups:{{ .Version }}-amd64"
+#       - "ghcr.io/martient/bifrost-backups:{{ .Version }}-arm64v8"
 dockers:
   - image_templates:
       - "ghcr.io/martient/bifrost-backups:{{ .Version }}-amd64"
     use: buildx
+    goarch: amd64
+    goos: linux
     dockerfile: goreleaser.dockerfile
     build_flag_templates:
       - "--platform=linux/amd64"
+      - "--build-arg=TARGETARCH=amd64"
+    extra_files:
+      - bifrost-backups
   - image_templates:
       - "ghcr.io/martient/bifrost-backups:{{ .Version }}-arm64v8"
     use: buildx
     goarch: arm64
+    goos: linux
     dockerfile: goreleaser.dockerfile
     build_flag_templates:
       - "--platform=linux/arm64/v8"
-docker_manifests:
-  - name_template: "ghcr.io/martient/bifrost-backups:{{ .Version }}"
-    image_templates:
-      - "ghcr.io/martient/bifrost-backups:{{ .Version }}-amd64"
-      - "ghcr.io/martient/bifrost-backups:{{ .Version }}-arm64v8"
+      - "--build-arg=TARGETARCH=arm64"
+    extra_files:
+      - bifrost-backups
 
 archives:
   - format: tar.gz
