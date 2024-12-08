@@ -4,7 +4,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/martient/bifrost-backup/pkg/setup"
+	"github.com/martient/bifrost-backups/pkg/setup"
 	"github.com/martient/golang-utils/utils"
 	"github.com/spf13/cobra"
 )

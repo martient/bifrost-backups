@@ -1,9 +1,9 @@
 package cmd
 
 import (
-	localstorage "github.com/martient/bifrost-backup/pkg/local_storage"
-	"github.com/martient/bifrost-backup/pkg/s3"
-	"github.com/martient/bifrost-backup/pkg/setup"
+	localstorage "github.com/martient/bifrost-backups/pkg/local_storage"
+	"github.com/martient/bifrost-backups/pkg/s3"
+	"github.com/martient/bifrost-backups/pkg/setup"
 	"github.com/martient/golang-utils/utils"
 	"github.com/spf13/cobra"
 )

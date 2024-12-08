@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/martient/bifrost-backup/pkg/postgresql"
-	"github.com/martient/bifrost-backup/pkg/s3"
+	"github.com/martient/bifrost-backups/pkg/postgresql"
+	"github.com/martient/bifrost-backups/pkg/s3"
 )
 
 func TestNewSecureManager(t *testing.T) {

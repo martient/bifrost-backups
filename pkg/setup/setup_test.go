@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/martient/bifrost-backup/pkg/postgresql"
+	"github.com/martient/bifrost-backups/pkg/postgresql"
 )
 
 func TestSecureManager(t *testing.T) {

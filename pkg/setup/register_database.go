@@ -5,10 +5,10 @@ import (
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/martient/bifrost-backup/pkg/local_files"
-	"github.com/martient/bifrost-backup/pkg/postgresql"
-	"github.com/martient/bifrost-backup/pkg/setup/interactives"
-	"github.com/martient/bifrost-backup/pkg/sqlite3"
+	"github.com/martient/bifrost-backups/pkg/local_files"
+	"github.com/martient/bifrost-backups/pkg/postgresql"
+	"github.com/martient/bifrost-backups/pkg/setup/interactives"
+	"github.com/martient/bifrost-backups/pkg/sqlite3"
 	"github.com/martient/golang-utils/utils"
 	"github.com/robfig/cron/v3"
 )

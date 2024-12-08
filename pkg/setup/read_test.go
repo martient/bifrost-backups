@@ -5,8 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/martient/bifrost-backup/pkg/postgresql"
-	localstorage "github.com/martient/bifrost-backup/pkg/local_storage"
+	localstorage "github.com/martient/bifrost-backups/pkg/local_storage"
+	"github.com/martient/bifrost-backups/pkg/postgresql"
 )
 
 func TestConfigFilePathSelection(t *testing.T) {
@@ -29,7 +29,7 @@ func TestConfigFilePathSelection(t *testing.T) {
 		envConfigPath := filepath.Join(tmpDir, "env-config.yaml")
 		os.Setenv("BIFROST_CONFIG", envConfigPath)
 		configFilePath = envConfigPath // Set it directly since init() has already run
-		
+
 		// Create a minimal valid config file
 		config := Config{
 			Version:   "1.0",
@@ -55,7 +55,7 @@ func TestConfigFilePathSelection(t *testing.T) {
 	// Test case 2: No environment variable (default path)
 	t.Run("Default path when no environment variable", func(t *testing.T) {
 		os.Unsetenv("BIFROST_CONFIG")
-		
+
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
 			t.Fatalf("Failed to get home directory: %v", err)
