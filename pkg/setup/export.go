@@ -3,6 +3,7 @@ package setup
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"gopkg.in/yaml.v3"
 )
@@ -38,12 +39,27 @@ func ReadConfigUnciphered() (Config, error) {
 
 // WriteConfigUnciphered writes the config to the specified path without encryption
 func WriteConfigUnciphered(path string, config Config) error {
-	// Create the file with secure permissions
-	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
-	if err != nil {
-		return fmt.Errorf("error creating config file: %v", err)
+	// Validate and clean the path
+	cleanPath := filepath.Clean(path)
+	if !filepath.IsAbs(cleanPath) {
+		return fmt.Errorf("path must be absolute: %s", path)
 	}
-	defer file.Close()
+
+	// Create the directory with secure permissions
+	if err := os.MkdirAll(filepath.Dir(cleanPath), 0750); err != nil {
+		return fmt.Errorf("failed to create directory: %w", err)
+	}
+
+	// Create the file with secure permissions
+	file, err := os.OpenFile(cleanPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0640)
+	if err != nil {
+		return fmt.Errorf("error creating config file: %w", err)
+	}
+	defer func() {
+		if cerr := file.Close(); cerr != nil && err == nil {
+			err = fmt.Errorf("error closing config file: %w", cerr)
+		}
+	}()
 
 	// Write config to file
 	encoder := yaml.NewEncoder(file)
@@ -51,5 +67,5 @@ func WriteConfigUnciphered(path string, config Config) error {
 		return fmt.Errorf("failed to encode config: %w", err)
 	}
 
-	return nil
+	return err
 }

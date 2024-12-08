@@ -37,7 +37,7 @@ func RunRestore(config LocalFilesRequirements, backupData *bytes.Buffer) error {
 				}
 				targetDir = filepath.Join(config.Path, rel)
 			}
-			if err := os.MkdirAll(targetDir, 0755); err != nil {
+			if err := os.MkdirAll(targetDir, 0750); err != nil {
 				return fmt.Errorf("failed to create directory: %w", err)
 			}
 			continue
@@ -47,7 +47,10 @@ func RunRestore(config LocalFilesRequirements, backupData *bytes.Buffer) error {
 		if strings.HasPrefix(line, "FILE:") {
 			// Close previous file if any
 			if currentFile != nil {
-				currentFile.Close()
+				if err := currentFile.Close(); err != nil {
+					return fmt.Errorf("failed to close file: %w", err)
+				}
+				currentFile = nil
 			}
 
 			filePath := strings.TrimPrefix(line, "FILE:")
@@ -64,14 +67,20 @@ func RunRestore(config LocalFilesRequirements, backupData *bytes.Buffer) error {
 				targetFile = filepath.Join(config.Path, rel)
 			}
 
+			// Validate the target path
+			cleanPath := filepath.Clean(targetFile)
+			if !filepath.IsAbs(cleanPath) {
+				return fmt.Errorf("target path must be absolute: %s", targetFile)
+			}
+
 			// Create parent directories
-			if err := os.MkdirAll(filepath.Dir(targetFile), 0755); err != nil {
+			if err := os.MkdirAll(filepath.Dir(cleanPath), 0750); err != nil {
 				return fmt.Errorf("failed to create parent directories: %w", err)
 			}
 
 			// Create the file
 			var err error
-			currentFile, err = os.Create(targetFile)
+			currentFile, err = os.OpenFile(cleanPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0640)
 			if err != nil {
 				return fmt.Errorf("failed to create file: %w", err)
 			}
@@ -81,7 +90,9 @@ func RunRestore(config LocalFilesRequirements, backupData *bytes.Buffer) error {
 		// Handle end marker
 		if line == "---END---" {
 			if currentFile != nil {
-				currentFile.Close()
+				if err := currentFile.Close(); err != nil {
+					return fmt.Errorf("failed to close file: %w", err)
+				}
 				currentFile = nil
 			}
 			continue
