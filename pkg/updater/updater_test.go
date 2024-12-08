@@ -336,17 +336,13 @@ func TestGetChecksumForAsset(t *testing.T) {
 	mockBinary := []byte("mock binary content")
 	mockChecksum := fmt.Sprintf("%x", sha256.Sum256(mockBinary))
 
-	mockServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		checksums := fmt.Sprintf("%s bifrost-backups_darwin_arm64.tar.gz\n%s bifrost-backups_linux_amd64.tar.gz",
-			mockChecksum,
-			"f5e9c6d7b8a3b2c1d4e5f6g7h8i9j0k1")
-		_, err := w.Write([]byte(checksums))
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	}))
-	defer mockServer.Close()
+	// Create a mock binary server
+	mockBinaryServer := mockBinaryServer()
+	defer mockBinaryServer.Close()
+
+	// Create a mock checksum server
+	mockChecksumServer := mockChecksumServer(mockChecksum, fmt.Sprintf("bifrost-backups_%s.tar.gz", fmt.Sprintf("%s_%s", runtime.GOOS, runtime.GOARCH)))
+	defer mockChecksumServer.Close()
 
 	tests := []struct {
 		name           string
@@ -356,18 +352,18 @@ func TestGetChecksumForAsset(t *testing.T) {
 		checksumServer *httptest.Server
 	}{
 		{
-			name:           "Valid checksum",
-			assetName:      "bifrost-backups_darwin_arm64.tar.gz",
+			name:           "Valid checksum macos",
+			assetName:      fmt.Sprintf("bifrost-backups_%s.tar.gz", fmt.Sprintf("%s_%s", runtime.GOOS, runtime.GOARCH)),
 			expectedHash:   mockChecksum,
 			expectError:    false,
-			checksumServer: mockServer,
+			checksumServer: mockChecksumServer,
 		},
 		{
 			name:           "Missing asset in checksums",
 			assetName:      "bifrost-backups_windows_amd64.tar.gz",
 			expectedHash:   "",
 			expectError:    true,
-			checksumServer: mockServer,
+			checksumServer: mockChecksumServer,
 		},
 	}
 
