@@ -59,6 +59,22 @@ var registerDatabaseCmd = &cobra.Command{
 					utils.LogError("Saved failed: %s", "CLI", err)
 					os.Exit(1)
 				}
+			case 3:
+				path, _ := cmd.Flags().GetString("path")
+				registered, err := setup.RegisterLocalFilesDatabase(path)
+				if err != nil {
+					utils.LogError("Your database haven't been registerd: %s", "CLI", err)
+					os.Exit(1)
+				}
+				cron, _ := cmd.Flags().GetString("cron")
+				storagesStr, _ := cmd.Flags().GetString("storages")
+				storages := strings.Split(storagesStr, ",")
+				name, _ := cmd.Flags().GetString("name")
+				err = setup.RegisterDatabase(db_type, name, cron, storages, registered)
+				if err != nil {
+					utils.LogError("Saved failed: %s", "CLI", err)
+					os.Exit(1)
+				}
 			default:
 				utils.LogWarning("Please choose between the available type of database with --type", "CLI")
 				os.Exit(-1)
@@ -76,8 +92,8 @@ var registerDatabaseCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(registerDatabaseCmd)
 	registerDatabaseCmd.Flags().BoolP("interactive", "i", false, "Use the interactive mode")
-	registerDatabaseCmd.Flags().Int64("type", -1, "Database type (1: postgresql, 2: sqlite3)")
-	registerDatabaseCmd.Flags().String("path", "", "Database path (sqlite3)")
+	registerDatabaseCmd.Flags().Int64("type", -1, "Database type (1: postgresql, 2: sqlite3, 3: local files)")
+	registerDatabaseCmd.Flags().String("path", "", "Database path (sqlite3, local files)")
 	registerDatabaseCmd.Flags().String("host", "localhost", "Database host")
 	registerDatabaseCmd.Flags().String("name", "", "Database name")
 	registerDatabaseCmd.Flags().String("user", "", "Database user")

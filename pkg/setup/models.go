@@ -1,6 +1,7 @@
 package setup
 
 import (
+	"github.com/martient/bifrost-backup/pkg/local_files"
 	localstorage "github.com/martient/bifrost-backup/pkg/local_storage"
 	"github.com/martient/bifrost-backup/pkg/postgresql"
 	"github.com/martient/bifrost-backup/pkg/s3"
@@ -12,6 +13,7 @@ type DatabaseType int64
 const (
 	Postgresql DatabaseType = 1
 	Sqlite3    DatabaseType = 2
+	LocalFiles DatabaseType = 3
 )
 
 type StorageType int64
@@ -37,6 +39,7 @@ type Database struct {
 	Name       string                            `yaml:"name"`
 	Postgresql postgresql.PostgresqlRequirements `yaml:"postgresql,omitempty"`
 	Sqlite3    sqlite3.Sqlite3Requirements       `yaml:"sqlite3,omitempty"`
+	LocalFiles localfiles.LocalFilesRequirements `yaml:"local_files,omitempty"`
 	Storages   []string                          `yaml:"storages"`
 	Cron       string                            `yaml:"cron"`
 }

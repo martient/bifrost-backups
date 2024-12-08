@@ -5,6 +5,7 @@ import (
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/martient/bifrost-backup/pkg/local_files"
 	"github.com/martient/bifrost-backup/pkg/postgresql"
 	"github.com/martient/bifrost-backup/pkg/setup/interactives"
 	"github.com/martient/bifrost-backup/pkg/sqlite3"
@@ -35,6 +36,15 @@ func RegisterPostgresqlDatabase(host string, user string, name string, password 
 
 func RegisterSqlite3Database(path string) (*sqlite3.Sqlite3Requirements, error) {
 	requirements := &sqlite3.Sqlite3Requirements{}
+	if len(path) <= 0 {
+		return nil, fmt.Errorf("path can't be empty")
+	}
+	requirements.Path = path
+	return requirements, nil
+}
+
+func RegisterLocalFilesDatabase(path string) (*localfiles.LocalFilesRequirements, error) {
+	requirements := &localfiles.LocalFilesRequirements{}
 	if len(path) <= 0 {
 		return nil, fmt.Errorf("path can't be empty")
 	}
@@ -87,6 +97,11 @@ func RegisterDatabase(databaseType DatabaseType, name string, cronExpr string, s
 			return fmt.Errorf("SQLite3 database path cannot be empty")
 		}
 		newDatabase.Sqlite3 = *req
+	case *localfiles.LocalFilesRequirements:
+		if req.Path == "" {
+			return fmt.Errorf("Local files database path cannot be empty")
+		}
+		newDatabase.LocalFiles = *req
 	default:
 		return fmt.Errorf("unsupported database type: %T", requirements)
 	}
