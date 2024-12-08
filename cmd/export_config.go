@@ -3,10 +3,12 @@ package cmd
 import (
 	"os"
 	"path/filepath"
+	"syscall"
 
 	"github.com/martient/bifrost-backup/pkg/setup"
 	"github.com/martient/golang-utils/utils"
 	"github.com/spf13/cobra"
+	"golang.org/x/term"
 )
 
 var exportConfigCmd = &cobra.Command{
@@ -20,17 +22,35 @@ var exportConfigCmd = &cobra.Command{
 			return
 		}
 
+		// Read current config first to check master password
+		config, err := setup.ReadConfigUnciphered()
+		if err != nil {
+			utils.LogError("Failed to read config", "CLI", err)
+			return
+		}
+
+		if config.MasterHash == "" {
+			utils.LogWarning("Master password not set. Please set one using init-master-password command to avoid security issues", "CLI")
+		} else {
+			// Prompt for master password
+			utils.LogInfo("Enter master password: ", "CLI")
+			password, err := term.ReadPassword(int(syscall.Stdin))
+			if err != nil {
+				utils.LogError("Failed to read password", "CLI", err)
+				return
+			}
+
+			// Validate master password
+			if err := setup.ValidateMasterPassword(&config, string(password)); err != nil {
+				utils.LogError("Invalid master password", "CLI", err)
+				return
+			}
+		}
+
 		// Create output directory if it doesn't exist
 		outputDir := filepath.Dir(outputPath)
 		if err := os.MkdirAll(outputDir, 0700); err != nil {
 			utils.LogError("Failed to create output directory", "CLI", err)
-			return
-		}
-
-		// Read current config
-		config, err := setup.ReadConfigUnciphered()
-		if err != nil {
-			utils.LogError("Failed to read config", "CLI", err)
 			return
 		}
 
