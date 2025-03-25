@@ -55,6 +55,7 @@ func New(currentVersion, githubRepo string, channel UpdateChannel) (*Updater, er
 		TelemetryPath:  filepath.Join(baseDir, "update-telemetry.json"),
 		RestartPath:    filepath.Join(baseDir, "restart-info.json"),
 		client:         github.NewClient(nil),
+		cache:          &UpdateCache{}, // Initialize the cache field
 	}, nil
 }
 
