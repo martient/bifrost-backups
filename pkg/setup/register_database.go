@@ -5,7 +5,7 @@ import (
 	"os"
 
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/martient/bifrost-backups/pkg/local_files"
+	localfiles "github.com/martient/bifrost-backups/pkg/local_files"
 	"github.com/martient/bifrost-backups/pkg/postgresql"
 	"github.com/martient/bifrost-backups/pkg/setup/interactives"
 	"github.com/martient/bifrost-backups/pkg/sqlite3"
@@ -99,7 +99,7 @@ func RegisterDatabase(databaseType DatabaseType, name string, cronExpr string, s
 		newDatabase.Sqlite3 = *req
 	case *localfiles.LocalFilesRequirements:
 		if req.Path == "" {
-			return fmt.Errorf("Local files database path cannot be empty")
+			return fmt.Errorf("local files database path cannot be empty")
 		}
 		newDatabase.LocalFiles = *req
 	default:

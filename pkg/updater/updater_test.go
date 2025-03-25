@@ -240,7 +240,11 @@ func TestUpdate(t *testing.T) {
 		// Create a temporary directory for the test
 		tmpDir, err := os.MkdirTemp("", "updater_test")
 		require.NoError(t, err)
-		defer os.RemoveAll(tmpDir)
+		defer func() {
+			if err := os.RemoveAll(tmpDir); err != nil {
+				t.Errorf("Failed to remove temp directory: %v", err)
+			}
+		}()
 
 		// Create a mock executable
 		exePath := filepath.Join(tmpDir, "bifrost-backup")
@@ -278,7 +282,11 @@ func TestRestartAfterUpdate(t *testing.T) {
 	// Create a temporary directory for the test
 	tmpDir, err := os.MkdirTemp("", "updater_test")
 	require.NoError(t, err)
-	defer os.RemoveAll(tmpDir)
+	defer func() {
+		if err := os.RemoveAll(tmpDir); err != nil {
+			t.Errorf("Failed to remove temp directory: %v", err)
+		}
+	}()
 
 	// Create a subdirectory for working directory
 	workDir := filepath.Join(tmpDir, "work")
@@ -409,7 +417,7 @@ func mockBinaryServer() *httptest.Server {
 
 func mockChecksumServer(mockChecksum, assetName string) *httptest.Server {
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_, err := w.Write([]byte(fmt.Sprintf("%s %s", mockChecksum, assetName)))
+		_, err := fmt.Fprintf(w, "%s %s", mockChecksum, assetName)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return

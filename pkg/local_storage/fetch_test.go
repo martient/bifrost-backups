@@ -25,7 +25,11 @@ func TestGetBackupPath(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer os.RemoveAll(tempDir)
+		defer func() {
+			if err := os.RemoveAll(tempDir); err != nil {
+				t.Errorf("Failed to remove temp directory: %v", err)
+			}
+		}()
 
 		_, err = getBackupPath(tempDir)
 		if err == nil {
@@ -41,7 +45,11 @@ func TestGetBackupPath(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer os.RemoveAll(tempDir)
+		defer func() {
+			if err := os.RemoveAll(tempDir); err != nil {
+				t.Errorf("Failed to remove temp directory: %v", err)
+			}
+		}()
 
 		// Create a test backup file
 		backupFile := filepath.Join(tempDir, "test_backup.json")
@@ -76,7 +84,11 @@ func TestPullBackup(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer os.RemoveAll(tempDir)
+		defer func() {
+			if err := os.RemoveAll(tempDir); err != nil {
+				t.Errorf("Failed to remove temp directory: %v", err)
+			}
+		}()
 
 		// Create a test backup file
 		backupFile := filepath.Join(tempDir, "test_backup.json")
@@ -100,7 +112,11 @@ func TestPullBackup(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer os.RemoveAll(tempDir)
+		defer func() {
+			if err := os.RemoveAll(tempDir); err != nil {
+				t.Errorf("Failed to remove temp directory: %v", err)
+			}
+		}()
 
 		// Create a test backup file
 		backupFile := filepath.Join(tempDir, "test_backup.json")
@@ -124,7 +140,11 @@ func TestPullBackup(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer os.RemoveAll(tempDir)
+		defer func() {
+			if err := os.RemoveAll(tempDir); err != nil {
+				t.Errorf("Failed to remove temp directory: %v", err)
+			}
+		}()
 
 		// Create a test backup file
 		backupFile := filepath.Join(tempDir, "test_backup.json.zst")
@@ -133,7 +153,11 @@ func TestPullBackup(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer encoder.Close()
+		defer func() {
+			if err := encoder.Close(); err != nil {
+				t.Errorf("failed to close encoder: %v", err)
+			}
+		}()
 
 		// Compress the input string
 		compressed := encoder.EncodeAll([]byte(data), nil)

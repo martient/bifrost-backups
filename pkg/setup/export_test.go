@@ -15,7 +15,11 @@ func TestConfigExportAndMasterPassword(t *testing.T) {
 	// Create a temporary directory for test files
 	tmpDir, err := os.MkdirTemp("", "bifrost-test-*")
 	require.NoError(t, err)
-	defer os.RemoveAll(tmpDir)
+	defer func() {
+		if err := os.RemoveAll(tmpDir); err != nil {
+			t.Errorf("Failed to remove temp directory: %v", err)
+		}
+	}()
 
 	// Save the original config file path and restore it after the test
 	originalConfigPath := configFilePath
@@ -127,7 +131,11 @@ func TestExportConfigWithoutMasterPassword(t *testing.T) {
 	// Create a temporary directory for test files
 	tmpDir, err := os.MkdirTemp("", "bifrost-test-*")
 	require.NoError(t, err)
-	defer os.RemoveAll(tmpDir)
+	defer func() {
+		if err := os.RemoveAll(tmpDir); err != nil {
+			t.Errorf("Failed to remove temp directory: %v", err)
+		}
+	}()
 
 	// Save the original config file path and restore it after the test
 	originalConfigPath := configFilePath

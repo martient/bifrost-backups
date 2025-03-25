@@ -3,6 +3,7 @@ package setup
 import (
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 	"sync"
@@ -37,7 +38,11 @@ func readConfig() (Config, error) {
 	if err != nil {
 		return Config{}, fmt.Errorf("error opening config file: %v", err)
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			log.Printf("failed to close config file: %v", err)
+		}
+	}()
 
 	config := Config{}
 	data, err := io.ReadAll(file)

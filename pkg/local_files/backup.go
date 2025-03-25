@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 
@@ -44,7 +45,7 @@ func RunBackup(config LocalFilesRequirements) (*bytes.Buffer, error) {
 
 func backupDirectory(sourcePath string, buffer *bytes.Buffer, config LocalFilesRequirements) error {
 	// Write directory marker
-	if _, err := buffer.WriteString(fmt.Sprintf("DIR:%s\n", sourcePath)); err != nil {
+	if _, err := fmt.Fprintf(buffer, "DIR:%s\n", sourcePath); err != nil {
 		return err
 	}
 
@@ -67,12 +68,12 @@ func backupDirectory(sourcePath string, buffer *bytes.Buffer, config LocalFilesR
 
 		if info.IsDir() {
 			// Write directory marker
-			_, err := buffer.WriteString(fmt.Sprintf("DIR:%s\n", path))
+			_, err := fmt.Fprintf(buffer, "DIR:%s\n", path)
 			return err
 		}
 
 		// Write file marker and content
-		if _, err := buffer.WriteString(fmt.Sprintf("FILE:%s\n", path)); err != nil {
+		if _, err := fmt.Fprintf(buffer, "FILE:%s\n", path); err != nil {
 			return err
 		}
 
@@ -91,7 +92,11 @@ func backupFile(sourcePath string, buffer *bytes.Buffer) error {
 	if err != nil {
 		return fmt.Errorf("failed to open source file: %w", err)
 	}
-	defer sourceFile.Close()
+	defer func() {
+		if err := sourceFile.Close(); err != nil {
+			log.Printf("failed to close source file: %v", err)
+		}
+	}()
 
 	_, err = io.Copy(buffer, sourceFile)
 	if err != nil {
