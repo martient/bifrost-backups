@@ -118,7 +118,11 @@ func (u *Updater) Update(release *ReleaseInfo) error {
 		telemetry.ErrorMessage = err.Error()
 		return fmt.Errorf("failed to create temporary file: %w", err)
 	}
-	defer os.Remove(tmpFile.Name())
+	defer func() {
+		if err := os.Remove(tmpFile.Name()); err != nil {
+			telemetry.ErrorMessage = err.Error()
+		}
+	}()
 
 	// Download the binary
 	if err := u.downloadBinary(release, tmpFile); err != nil {
@@ -208,7 +212,11 @@ func (u *Updater) downloadBinary(release *ReleaseInfo, tmpFile *os.File) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Printf("Failed to close response body: %v", err)
+		}
+	}()
 
 	_, err = io.Copy(tmpFile, resp.Body)
 	return err
@@ -352,7 +360,11 @@ func (u *Updater) getChecksumForAsset(checksumAsset *github.ReleaseAsset, assetN
 	if err != nil {
 		return "", err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Printf("Failed to close response body: %v", err)
+		}
+	}()
 
 	content, err := io.ReadAll(resp.Body)
 	if err != nil {

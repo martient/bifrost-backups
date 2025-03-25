@@ -3,6 +3,7 @@ package postgresql
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 
@@ -41,7 +42,11 @@ func RunRestoration(database PostgresqlRequirements, backup *bytes.Buffer) error
 	if err != nil {
 		return fmt.Errorf("failed to create temporary file: %w", err)
 	}
-	defer os.Remove(tempFile.Name()) // Clean up the temporary file
+	defer func() {
+		if err := os.Remove(tempFile.Name()); err != nil {
+			log.Printf("failed to remove temporary file: %v", err)
+		}
+	}()
 
 	// Set secure permissions on the temporary file
 	if err := os.Chmod(tempFile.Name(), 0600); err != nil {

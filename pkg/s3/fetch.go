@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -81,7 +82,11 @@ func PullBackup(storage S3Requirements, backup_name string, useCompression bool)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get object %s from bucket %s: %v", latestBackupKey, storage.BucketName, err)
 	}
-	defer obj.Body.Close()
+	defer func() {
+		if err := obj.Body.Close(); err != nil {
+			log.Printf("failed to close object body: %v", err)
+		}
+	}()
 
 	buf := new(bytes.Buffer)
 	var reader io.Reader = obj.Body

@@ -68,7 +68,11 @@ func TestConfigOperations(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp directory: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() {
+		if err := os.RemoveAll(tmpDir); err != nil {
+			t.Errorf("Failed to remove temp directory: %v", err)
+		}
+	}()
 
 	t.Run("WriteAndReadConfig", func(t *testing.T) {
 		testConfig := Config{

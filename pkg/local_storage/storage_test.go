@@ -14,7 +14,11 @@ func TestLocalStorageOperations(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp directory: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() {
+		if err := os.RemoveAll(tmpDir); err != nil {
+			t.Errorf("Failed to remove temp directory: %v", err)
+		}
+	}()
 
 	t.Run("Store operations", func(t *testing.T) {
 		tests := []struct {

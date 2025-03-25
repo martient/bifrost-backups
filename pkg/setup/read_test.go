@@ -14,7 +14,9 @@ func TestConfigFilePathSelection(t *testing.T) {
 	originalConfigPath := configFilePath
 	defer func() {
 		configFilePath = originalConfigPath
-		os.Unsetenv("BIFROST_CONFIG")
+		if err := os.Unsetenv("BIFROST_CONFIG"); err != nil {
+			t.Errorf("Failed to unset BIFROST_CONFIG environment variable: %v", err)
+		}
 	}()
 
 	// Create a temporary directory for testing
@@ -22,12 +24,18 @@ func TestConfigFilePathSelection(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp directory: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() {
+		if err := os.RemoveAll(tmpDir); err != nil {
+			t.Errorf("Failed to remove temp directory: %v", err)
+		}
+	}()
 
 	// Test case 1: Environment variable is set
 	t.Run("Environment variable takes precedence", func(t *testing.T) {
 		envConfigPath := filepath.Join(tmpDir, "env-config.yaml")
-		os.Setenv("BIFROST_CONFIG", envConfigPath)
+		if err := os.Setenv("BIFROST_CONFIG", envConfigPath); err != nil {
+			t.Fatalf("Failed to set BIFROST_CONFIG environment variable: %v", err)
+		}
 		configFilePath = envConfigPath // Set it directly since init() has already run
 
 		// Create a minimal valid config file
@@ -54,7 +62,9 @@ func TestConfigFilePathSelection(t *testing.T) {
 
 	// Test case 2: No environment variable (default path)
 	t.Run("Default path when no environment variable", func(t *testing.T) {
-		os.Unsetenv("BIFROST_CONFIG")
+		if err := os.Unsetenv("BIFROST_CONFIG"); err != nil {
+			t.Fatalf("Failed to unset BIFROST_CONFIG environment variable: %v", err)
+		}
 
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
@@ -80,7 +90,11 @@ func TestConfigFilePathSelection(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to write test config: %v", err)
 		}
-		defer os.Remove(expectedPath)
+		defer func() {
+			if err := os.Remove(expectedPath); err != nil {
+				t.Errorf("Failed to remove test config file: %v", err)
+			}
+		}()
 
 		// Try to read config
 		_, err = readConfig()
@@ -106,7 +120,11 @@ func TestReadConfig(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to create temp directory: %v", err)
 	}
-	defer os.RemoveAll(tmpDir)
+	defer func() {
+		if err := os.RemoveAll(tmpDir); err != nil {
+			t.Errorf("Failed to remove temp directory: %v", err)
+		}
+	}()
 
 	// Create a test config file
 	testConfigPath := filepath.Join(tmpDir, "test-config.yaml")

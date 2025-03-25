@@ -74,7 +74,7 @@ func upload(client *s3.Client, bucket_name string, buffer []byte) error {
 		return fmt.Errorf("s3 client can't be null for the upload operation")
 	} else if len(bucket_name) <= 0 {
 		return fmt.Errorf("the bucket need a name, can't be null at the upload")
-	} else if buffer == nil || len(buffer) <= 0 {
+	} else if len(buffer) <= 0 {
 		return fmt.Errorf("the buffer can't be nil or empty at the bucket upload")
 	}
 	currentTime := time.Now().UTC()
@@ -148,7 +148,11 @@ func StoreBackup(storage S3Requirements, buffer *bytes.Buffer, useCompression bo
 			utils.LogError("Compression failed", "S3", err)
 			return err
 		}
-		defer encoder.Close()
+		defer func() {
+			if err := encoder.Close(); err != nil {
+				utils.LogError("Failed to close encoder", "S3", err)
+			}
+		}()
 
 		// Compress the input string
 		compressed := encoder.EncodeAll([]byte(buffer.Bytes()), nil)

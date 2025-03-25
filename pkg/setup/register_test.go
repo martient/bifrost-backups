@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/martient/bifrost-backups/pkg/local_files"
+	localfiles "github.com/martient/bifrost-backups/pkg/local_files"
 	localstorage "github.com/martient/bifrost-backups/pkg/local_storage"
 	"github.com/martient/bifrost-backups/pkg/postgresql"
 	"github.com/martient/bifrost-backups/pkg/s3"
@@ -97,7 +97,9 @@ func TestRegisterDatabase(t *testing.T) {
 			originalConfigPath := configFilePath
 			defer func() {
 				configFilePath = originalConfigPath
-				os.Unsetenv("BIFROST_CONFIG")
+				if err := os.Unsetenv("BIFROST_CONFIG"); err != nil {
+					t.Errorf("Failed to unset BIFROST_CONFIG environment variable: %v", err)
+				}
 			}()
 
 			// Create a temporary directory for testing
@@ -105,7 +107,11 @@ func TestRegisterDatabase(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Failed to create temp directory: %v", err)
 			}
-			defer os.RemoveAll(tmpDir)
+			defer func() {
+				if err := os.RemoveAll(tmpDir); err != nil {
+					t.Errorf("Failed to remove temp directory: %v", err)
+				}
+			}()
 
 			// Create initial config file
 			configPath := filepath.Join(tmpDir, "config.yaml")
@@ -199,7 +205,9 @@ func TestRegisterStorage(t *testing.T) {
 			originalConfigPath := configFilePath
 			defer func() {
 				configFilePath = originalConfigPath
-				os.Unsetenv("BIFROST_CONFIG")
+				if err := os.Unsetenv("BIFROST_CONFIG"); err != nil {
+					t.Errorf("Failed to unset BIFROST_CONFIG environment variable: %v", err)
+				}
 			}()
 
 			// Create a temporary directory for testing
@@ -207,7 +215,11 @@ func TestRegisterStorage(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Failed to create temp directory: %v", err)
 			}
-			defer os.RemoveAll(tmpDir)
+			defer func() {
+				if err := os.RemoveAll(tmpDir); err != nil {
+					t.Errorf("Failed to remove temp directory: %v", err)
+				}
+			}()
 
 			// Create initial config file
 			configPath := filepath.Join(tmpDir, "config.yaml")

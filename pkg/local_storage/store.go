@@ -40,7 +40,11 @@ func StoreBackup(storage LocalStorageRequirements, buffer *bytes.Buffer, useComp
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			utils.LogError("Failed to close file", "Local storage", err)
+		}
+	}()
 
 	var dataToWrite []byte
 
@@ -50,7 +54,11 @@ func StoreBackup(storage LocalStorageRequirements, buffer *bytes.Buffer, useComp
 			utils.LogError("Compression failed", "Local storage", err)
 			return err
 		}
-		defer encoder.Close()
+		defer func() {
+			if err := encoder.Close(); err != nil {
+				utils.LogError("Failed to close encoder", "Local storage", err)
+			}
+		}()
 
 		// Compress the input string
 		compressed := encoder.EncodeAll([]byte(buffer.Bytes()), nil)

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 	"sort"
@@ -64,7 +65,11 @@ func PullBackup(storage LocalStorageRequirements, backup_name string, useCompres
 	if err != nil {
 		return nil, fmt.Errorf("error opening config file: %v", err)
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			log.Printf("failed to close config file: %v", err)
+		}
+	}()
 
 	var reader io.Reader = file
 
